@@ -34,8 +34,8 @@ export default function TopicSidebar() {
   return (
     <aside className="hidden w-60 shrink-0 lg:block">
       <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
-        {block('notes', 'Your notes')}
-        {block('curriculum', 'Curriculum')}
+        {block('notes', 'Module 1 (class order)')}
+        {block('curriculum', 'Coming up')}
       </div>
     </aside>
   );

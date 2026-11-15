@@ -23,8 +23,8 @@ export default function DsaHome() {
   }, [query, diff, notesOnly]);
 
   const groups = [
-    { key: 'notes', title: 'From your Bosscoder notes', desc: 'Lectures 1–9 in your Bosscoder Notes folder, with every problem re-solved in JavaScript.' },
-    { key: 'curriculum', title: 'Rest of the curriculum', desc: 'Topics not in your notes yet — the standard Bosscoder DSA track, with the classic interview problems for each.' },
+    { key: 'notes', title: 'Bosscoder Module 1 — in class order', desc: 'All 20 lectures + 8 IL sessions of Master Problem Solving in DS & Algo (EV-21A): every class and homework problem re-solved in JavaScript. 📒 marks the lecture it came from.' },
+    { key: 'curriculum', title: 'Not covered in class yet', desc: 'Strings and graphs — classic interview problems to get ahead.' },
   ];
 
   return (
