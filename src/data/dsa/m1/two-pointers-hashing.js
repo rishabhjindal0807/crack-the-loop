@@ -149,7 +149,6 @@ export const twoPointersExtra = [
     id: 'count-rectangles-area',
     title: 'Count Rectangles with Area Less Than a Given Number',
     difficulty: 'Medium',
-    lc: 'https://www.geeksforgeeks.org/count-of-rectangles-with-area-k-made-up-of-only-1s-from-given-binary-arrays/',
     from: 'Lec 11 – 2 Pointers (Bosscoder notes)',
     tags: ['two-pointers', 'sorting'],
     statement: 'Given an array of side lengths, count ordered pairs `(a[i], a[j])` (i and j may be equal, i.e. squares allowed) whose rectangle area `a[i] · a[j] < A`.\n\n**Example:** `[1, 2, 3, 4, 5], A = 5` → `8` — (1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(3,1),(4,1)',

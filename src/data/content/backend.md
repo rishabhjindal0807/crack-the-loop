@@ -11,6 +11,8 @@ tagline: Python/FastAPI, async SQLAlchemy + PostgreSQL, Redis, API design, OAuth
 - **Temporal** for durable workflows (100+ concurrent), REST + GraphQL APIs.
 - **Infra/release:** Docker multi-stage builds, Kubernetes + Helm, **ArgoCD GitOps**, Jenkins, separate **India and UAE** environments, **weekly releases at 99.9%+ uptime**.
 - **Leadership:** team of 6, architecture & delivery ownership, code-review process, mentoring, interviewing; earlier led 4 devs at Publicis Sapient with daily fail-forward releases.
+
+> **Note:** answers tagged **From resume** are suggested framings built from your resume. Where they give specifics (which library, which incident, which numbers), swap in what actually happened. Never claim a detail you can't back up.
 :::
 
 # Python & async {#python}
@@ -32,7 +34,7 @@ async with asyncio.TaskGroup() as tg:          # 3.11+: structured concurrency, 
 It **blocks the event loop** — every other request on that worker stalls (latency spikes, timeouts, health checks failing). Common culprits: `requests`, sync DB drivers, `time.sleep`, heavy pandas/PDF processing. Fixes: use async libraries (`httpx`, `asyncpg`), `await asyncio.to_thread(fn)` / `run_in_executor` for unavoidable sync calls, or make the endpoint a plain `def` (FastAPI runs it in a threadpool). Detect with asyncio debug mode / slow-callback warnings.
 
 ## The GIL, threads vs processes vs asyncio [Core]
-The **GIL** lets only one thread execute Python bytecode at a time (in standard CPython builds; 3.13 adds an experimental free-threaded build).
+The **GIL** lets only one thread execute Python bytecode at a time (in standard CPython builds). 3.13 added an experimental free-threaded (no-GIL) build, and 3.14 made it officially supported but still optional — most production deployments still run with the GIL.
 - **Threads** — fine for I/O-bound work, simple with sync libraries.
 - **Processes** (`multiprocessing`, `ProcessPoolExecutor`, multiple Uvicorn/Gunicorn workers) — true parallelism for CPU-bound work, more memory.
 - **asyncio** — highest concurrency for I/O-bound work with the least overhead, but every library in the path must be async.
@@ -181,7 +183,7 @@ Use **expand → migrate → contract** across releases:
 Avoid long locks: set `lock_timeout`, never rewrite big tables in one migration, and keep migrations backward compatible with the currently running version (rolling deploys run old and new pods together).
 
 ## Multi-tenancy in PostgreSQL — shared schema, schema-per-tenant or DB-per-tenant? [Design]
-- **Shared tables + `tenant_id`** — simplest ops, scales to many tenants; risk of leaks if a query forgets the filter → enforce with a repository base class that always applies scope, and/or **Row-Level Security** policies (`SET app.tenant_id` per transaction).
+- **Shared tables + `tenant_id`** — simplest ops, scales to many tenants; risk of leaks if a query forgets the filter → enforce with a repository base class that always applies scope, and/or **Row-Level Security** policies keyed on a per-transaction setting (`SET LOCAL app.tenant_id = …` or `set_config('app.tenant_id', …, true)` — transaction-scoped so pooled connections can't leak it).
 - **Schema per tenant** — stronger isolation, migrations × N.
 - **Database per tenant** — strongest isolation, per-tenant backup/restore and residency, highest ops cost.
 For ~10 lenders with regulatory needs: shared schema per **region** with RLS + scope enforcement in code is a solid answer; mention a dedicated DB for a lender that contractually demands it.
@@ -232,7 +234,7 @@ Alternatives: **token bucket** (allows bursts, smooth refill — good for protec
 # API design {#api}
 
 ## What makes a good REST API? [Core]
-Resource-oriented URLs (`/lenders/{id}/cams/{cam_id}/versions`), correct methods and status codes (201 + `Location` on create, 204, 409 on conflict, 422 validation, 429 rate limit), consistent error body (RFC 7807 problem+json), **cursor pagination**, filtering/sorting conventions, `ETag`/`If-Match` for optimistic concurrency, versioning strategy, idempotency for unsafe retries, OpenAPI documentation, and auth scopes per endpoint.
+Resource-oriented URLs (`/lenders/{id}/cams/{cam_id}/versions`), correct methods and status codes (201 + `Location` on create, 204, 409 on conflict, 422 validation, 429 rate limit), consistent error body (RFC 9457 problem+json, which replaced RFC 7807), **cursor pagination**, filtering/sorting conventions, `ETag`/`If-Match` for optimistic concurrency, versioning strategy, idempotency for unsafe retries, OpenAPI documentation, and auth scopes per endpoint.
 
 ## Offset vs cursor pagination [Core]
 `OFFSET 100000` makes the DB scan and discard rows (slow) and shifts when rows are inserted (duplicates/skips). **Cursor/keyset** pagination: `WHERE (created_at, id) < (:last_created_at, :last_id) ORDER BY created_at DESC, id DESC LIMIT 50` — constant cost with the right composite index, stable under inserts. Offset is fine for small admin tables needing "jump to page 7".
@@ -257,7 +259,7 @@ Sign payloads (HMAC with a per-subscriber secret + timestamp to prevent replay),
 - **Authorization Code + PKCE** — SPAs and mobile apps (no client secret in the browser). OIDC adds an **ID token** (who the user is) on top of OAuth's access token (what the client may do).
 - **Client Credentials** — service-to-service (Temporal workers calling APIs, MCP servers calling internal services).
 - **Refresh tokens** — long-lived, rotated on use, stored HttpOnly or server-side.
-- Avoid Implicit and Password grants (deprecated in OAuth 2.1).
+- Avoid the Implicit and Password grants — the OAuth 2.0 Security BCP (RFC 9700) discourages them and the OAuth 2.1 draft removes them.
 
 ## JWT — structure, validation and pitfalls [Core]
 `header.payload.signature` (base64url). Validate: **signature** (prefer RS256/ES256 with a JWKS endpoint so services only hold public keys), `exp`/`nbf`, `iss`, `aud`, and pin allowed algorithms (reject `none`/algorithm confusion). Keep access tokens **short-lived** (5–15 min); JWTs can't be revoked individually — use short TTL + refresh rotation, a deny-list (Redis) for emergencies, or opaque tokens with introspection for high-risk actions. Don't put sensitive data in claims (they're only encoded, not encrypted) and keep them small.
@@ -271,8 +273,12 @@ Sign payloads (HMAC with a per-subscriber secret + timestamp to prevent replay),
 **Evaluation:** a user can act on a resource if they hold the permission via an assignment whose org unit is the resource's unit **or an ancestor** (CRO at lender level sees all; RM at branch sees only that branch). With `ltree`, `resource.path <@ assignment.path` is a single indexed query.
 
 ```python
+def is_within(resource_path: str, scope_path: str) -> bool:
+    # segment-aware: "lender1.div2" covers "lender1.div2.branch7", but NOT "lender1.div23"
+    return resource_path == scope_path or resource_path.startswith(scope_path + ".")
+
 def can(user: Principal, perm: str, resource_unit_path: str) -> bool:
-    return any(perm in a.permissions and resource_unit_path.startswith(a.unit_path)
+    return any(perm in a.permissions and is_within(resource_unit_path, a.unit_path)
                for a in user.assignments)
 ```
 
@@ -368,7 +374,7 @@ Also: pin base image digests, `.dockerignore`, scan images (Trivy) in CI.
 **Deployment** (replica sets, rolling updates) → **Pods**; **Service** (stable virtual IP / DNS) and **Ingress** for HTTP routing; **ConfigMaps/Secrets**; **HPA** autoscaling on CPU or custom metrics (queue depth for Temporal workers); **resource requests/limits** (requests drive scheduling; memory limit breach = OOMKill); **probes** — readiness (take out of load balancing), liveness (restart), startup (slow boots); **PodDisruptionBudgets** for safe node drains; **NetworkPolicies** to restrict traffic; namespaces per environment/team.
 
 ## Helm + ArgoCD GitOps — how does your release flow work? [From resume]
-CI (Jenkins/GitLab) runs tests, builds and scans the image, pushes it with an immutable tag, then updates the image tag in the **GitOps repo** (Helm values per environment: `dev`, `uat`, `prod-india`, `prod-uae`). **ArgoCD** watches the repo and syncs clusters to the declared state, shows drift, and supports rollback by reverting a commit. Promotion between environments = PR to the next environment's values (reviewed, auditable). Benefits: Git is the single source of truth, every change is reviewed and reversible, clusters self-heal from manual drift.
+CI (Jenkins/GitLab) runs tests, builds and scans the image, pushes it with an immutable tag, then updates the image tag in the **GitOps repo** (Helm values per environment — e.g. `dev`, `uat`, `prod-india`, `prod-uae`; use your real names). **ArgoCD** watches the repo and syncs clusters to the declared state, shows drift, and supports rollback by reverting a commit. Promotion between environments = PR to the next environment's values (reviewed, auditable). Benefits: Git is the single source of truth, every change is reviewed and reversible, clusters self-heal from manual drift.
 
 ## How do you release weekly with 99.9%+ uptime? [From resume]
 - Small, frequent changes behind **feature flags**; trunk-based development.
@@ -392,6 +398,7 @@ CI (Jenkins/GitLab) runs tests, builds and scans the image, pushes it with an im
 - Coverage on critical paths (money, permissions, citations) rather than a vanity percentage; tests required in PR template; flaky tests quarantined and fixed.
 
 ```python
+# async fixtures/tests need pytest-asyncio (or anyio) — e.g. asyncio_mode = "auto" in pytest config
 @pytest.fixture
 async def client(db_session):
     app.dependency_overrides[get_session] = lambda: db_session

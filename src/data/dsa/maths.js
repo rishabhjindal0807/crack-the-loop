@@ -398,7 +398,7 @@ export default {
           `,
         },
       ],
-      explanation: 'When k is even, `r = k/2` pairs with itself — the loop checks `cnt[k/2] === cnt[k/2]` (always true) — LeetCode accepts this because total length is even; to be strict also require `cnt[k/2]` even.',
+      explanation: 'When k is even, `r = k/2` pairs with itself, so the loop’s check there is trivially true. That is still correct: the array length is even, `cnt[0]` is even and every other remainder pairs off evenly, so `cnt[k/2]` is forced to be even too.',
       fn: 'canArrange',
       tests: [
         { args: [[1, 2, 3, 4, 5, 10, 6, 7, 8, 9], 5], expected: true },

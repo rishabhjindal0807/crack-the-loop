@@ -12,6 +12,8 @@ tagline: JavaScript, React 18, TypeScript, Angular/RxJS, performance, accessibil
 - **TCS:** Carnival itinerary system with **AG Grid** Excel-like editing; Deutsche Bank portfolio management.
 
 Have a 2-minute story ready for each bolded metric: *problem → what you did → measurable result → what you'd do differently.*
+
+> **Note:** answers tagged **From resume** are suggested framings built from your resume. Where they give specifics (which library, which incident, which numbers), swap in what actually happened. Never claim a detail you can't back up.
 :::
 
 # JavaScript fundamentals {#js}
@@ -69,9 +71,12 @@ React flavour: a **stale closure** — `setInterval(() => setCount(count + 1), 1
 ```js
 Function.prototype.myBind = function (ctx, ...preset) {
   const fn = this;
-  return function (...args) {
-    return fn.apply(this instanceof fn ? this : ctx, [...preset, ...args]); // respects `new`
-  };
+  function bound(...args) {
+    // called with `new` → ignore ctx and use the new instance
+    return fn.apply(this instanceof bound ? this : ctx, [...preset, ...args]);
+  }
+  bound.prototype = Object.create(fn.prototype); // so `new bound()` instances inherit from fn
+  return bound;
 };
 ```
 
@@ -89,12 +94,12 @@ Differences from old constructor functions: class bodies are strict mode, classe
 ## Promises: states, chaining, and the combinators [Core]
 A promise is `pending` → `fulfilled` | `rejected` (settled once). `.then` returns a **new** promise, so returning a value/promise from a handler chains; throwing rejects.
 
-| Combinator | Resolves when | Rejects when |
+| Combinator | Fulfils when | Rejects when |
 |---|---|---|
-| `Promise.all` | all fulfil (array of values, input order) | **first** rejection |
-| `Promise.allSettled` | all settle | never |
-| `Promise.race` | first settles (either way) | first settles with rejection |
-| `Promise.any` | first fulfils | all reject (`AggregateError`) |
+| `Promise.all` | all inputs fulfil (array of values, input order) | as soon as **any** input rejects |
+| `Promise.allSettled` | all inputs settle (array of `{status, value \| reason}`) | never |
+| `Promise.race` | the **first input to settle** fulfils | the first input to settle rejects |
+| `Promise.any` | the first input fulfils | all inputs reject (`AggregateError`) |
 
 `async/await` is sugar over promises — wrap with `try/catch`, and remember `await` in a `for` loop is **sequential**; use `Promise.all(items.map(fn))` for parallel, or a concurrency limiter for many requests.
 
@@ -287,7 +292,8 @@ export function CompanySearch() {
   const debounced = useDebounced(q);
 
   useEffect(() => {
-    if (!debounced) return setItems([]);
+    setActive(-1);                                    // new results → reset highlight
+    if (!debounced) { setItems([]); return; }
     const ctrl = new AbortController();               // cancel stale requests
     fetch(`/api/companies?q=${encodeURIComponent(debounced)}`, { signal: ctrl.signal })
       .then((r) => r.json()).then(setItems).catch(() => {});
@@ -301,9 +307,11 @@ export function CompanySearch() {
   };
 
   return (
-    <div role="combobox" aria-expanded={items.length > 0} aria-owns="results">
-      <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKeyDown}
-             aria-autocomplete="list" aria-activedescendant={active >= 0 ? `opt-${active}` : undefined} />
+    <div>
+      {/* ARIA 1.2 combobox: the role goes on the input itself */}
+      <input role="combobox" aria-expanded={items.length > 0} aria-controls="results"
+             aria-autocomplete="list" aria-activedescendant={active >= 0 ? `opt-${active}` : undefined}
+             value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKeyDown} />
       <ul id="results" role="listbox">
         {items.map((c, i) => (
           <li key={c.id} id={`opt-${i}`} role="option" aria-selected={i === active}>{c.name}</li>
@@ -329,7 +337,7 @@ The **Fiber** architecture splits rendering into interruptible units of work (re
 - **Automatic batching** — state updates inside promises, timeouts and native handlers are batched (previously only inside React events). Use `flushSync` to opt out.
 - **Transitions** — `startTransition` / `useTransition` mark updates as non-urgent, so typing stays responsive while a heavy list re-renders; `isPending` lets you show a spinner.
 - **`useDeferredValue`** — render with a lagging copy of a value (great for filtering big tables).
-- **Suspense** for data and streaming SSR with selective hydration.
+- **Suspense** on the server: streaming SSR with selective hydration. Suspense for data fetching works through frameworks/libraries (Next.js, React Query's suspense mode), not a built-in fetch API.
 - **New hooks:** `useId` (SSR-safe ids for ARIA), `useSyncExternalStore` (tear-free subscriptions — what Redux/Zustand use), `useInsertionEffect` (CSS-in-JS).
 - StrictMode in dev **double-invokes** effects (mount → unmount → mount) to surface missing cleanups.
 
@@ -342,7 +350,7 @@ const onChange = (e) => {
 ```
 
 ## useEffect vs useLayoutEffect, dependencies and cleanup [Core]
-- `useEffect` runs **after paint** — data fetching, subscriptions, logging.
+- `useEffect` usually runs **after paint** — data fetching, subscriptions, logging. (For discrete input like a click, React 18 may flush it before paint.)
 - `useLayoutEffect` runs after DOM mutation but **before paint** — measuring DOM / preventing flicker (tooltip positioning). It blocks painting, so keep it small.
 - The dependency array is compared with `Object.is`. Missing deps ⇒ stale closures; objects/functions created during render ⇒ the effect runs every render.
 - The **cleanup** runs before the next effect and on unmount — abort fetches, clear timers, unsubscribe.
@@ -356,7 +364,7 @@ They're **referential stability** tools, not free performance:
 - `useCallback(fn, deps)` / `useMemo(() => obj, deps)` keep the same reference between renders so a memoised child (or an effect dependency) doesn't see a "new" prop.
 - `useMemo` also caches genuinely expensive computations (sorting/aggregating thousands of loan rows for a chart).
 
-Measure first with the React Profiler. Often better fixes: **move state down** to the component that needs it, **lift content up** (pass children), split contexts, or virtualise long lists. (The React Compiler automates memoisation in React 19.)
+Measure first with the React Profiler. Often better fixes: **move state down** to the component that needs it, **lift content up** (pass children), split contexts, or virtualise long lists. (The React Compiler, a separate build-time tool, now automates most of this memoisation.)
 
 ## Context API — performance pitfalls and alternatives [Core]
 Every consumer re-renders when the context **value** changes. A provider with `value={{ user, setUser }}` creates a new object each render ⇒ all consumers re-render.
@@ -368,8 +376,8 @@ Separate **server state** from **client state**:
 
 - **Server state** (lists, entities fetched from APIs — company data, CAM versions): React Query / RTK Query. You get caching, deduping, background refetch, retries, optimistic updates, pagination.
 - **Global client state:**
-  - **Redux Toolkit** — large teams, strict conventions, devtools/time-travel, middleware; used for the Yubi LMS dashboards where many widgets shared filters.
-  - **Zustand** — tiny API, no providers, selector-based subscriptions; used in OptimaAI for chat/session UI state.
+  - **Redux / Redux Toolkit** — large teams, strict conventions, devtools/time-travel, middleware. Your resume ties Redux to the Yubi LMS early-risk dashboards.
+  - **Zustand** — tiny API, no providers, selector-based subscriptions. It's on your resume; be ready to say where you used it and why.
   - **Context** — rarely-changing values.
 - **Local UI state** — `useState`/`useReducer`.
 
@@ -515,7 +523,7 @@ this.results$ = this.query.valueChanges.pipe(
 ```
 
 ## How did you remove unnecessary API calls with RxJS? [From resume]
-On the Verizon order flow several components requested the same device/plan data and re-fired on every form change. The fixes:
+*Example framing — adapt it to what actually happened on the Verizon order flow.* A typical cause: several components request the same device/plan data and re-fire on every form change. The fixes:
 
 - **Share** one request across subscribers: `shareReplay({ bufferSize: 1, refCount: true })` on a service-level observable (a cached stream per key).
 - `debounceTime` + `distinctUntilChanged` on form value streams so only meaningful changes trigger calls.

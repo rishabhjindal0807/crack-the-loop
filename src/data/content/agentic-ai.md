@@ -14,6 +14,8 @@ tagline: LLM fundamentals, agents & tool use, MCP, RAG with Qdrant, citations, T
 - Stack keywords: Anthropic Claude SDK, mcp-agent, Google ADK, LastMile AI, RAG, Qdrant, Claude Code / Windsurf.
 
 Expect deep follow-ups on every bullet: *why this choice, what alternatives you rejected, what broke in production, how you measured success.*
+
+> **Note:** answers tagged **From resume** are suggested framings built from your resume. Where they give specifics (which library, which incident, which numbers), swap in what actually happened. Never claim a detail you can't back up.
 :::
 
 # LLM fundamentals {#llm}
@@ -65,7 +67,7 @@ An **agent** is an LLM running in a loop: it decides which tool to call, observe
 
 Anthropic's guidance (Building Effective Agents): start with the simplest thing — a single well-prompted call → **workflows** (prompt chaining, routing, parallelisation, orchestrator–workers, evaluator–optimiser) → autonomous **agents** only when the steps can't be predicted. Agents trade latency/cost/predictability for flexibility.
 
-OptimaAI uses both: deterministic **Temporal workflows** for taskbooks and CAM generation steps, and **agents** for open-ended analyst questions and CAM editing instructions.
+OptimaAI uses both: deterministic **Temporal workflows** for taskbooks, RFP orchestration and ops automation, and **agents** for open-ended analyst questions and the CAM editing agent.
 
 ## Implement a tool-use loop with the Anthropic Claude SDK [Coding]
 ```python
@@ -121,7 +123,9 @@ Tools are a prompt surface — the model only knows what the name, description a
 - Fewer, higher-level tools beat many tiny ones (consolidate "get revenue", "get EBITDA" into `get_financials`).
 - Evaluate tool-selection accuracy as part of your evals.
 
-## Explain the common agentic patterns with examples from your platform [From resume]
+## Explain the common agentic patterns, mapped onto a platform like yours [From resume]
+*Illustrative mapping. Use the ones that match how OptimaAI is actually built.*
+
 - **Routing** — classify the conversation and send it to a specialised agent: *company* (corporate borrowers) vs *retail* agent via mcp-agent's router; each has its own prompt and tool subset.
 - **Prompt chaining** — CAM generation: extract financials → compute ratios (calculator tools) → draft each section → assemble.
 - **Parallelisation** — draft independent CAM sections concurrently; run multiple checks in parallel.
@@ -145,7 +149,7 @@ Untrusted text (uploaded PDFs, emails, web pages, even tool results) can contain
 
 ## Google ADK vs mcp-agent vs raw SDK — how did you choose? [From resume]
 - **Raw Claude SDK** — maximum control and transparency; you write the loop, retries and tool routing yourself. Good for core flows where you need auditability.
-- **mcp-agent** — lightweight framework built around MCP: agents connect to MCP servers, with workflow patterns (router, orchestrator, parallel, evaluator-optimiser) out of the box; fits a platform whose tools are already MCP servers. Used for routing conversations to company/retail agents.
+- **mcp-agent** (open source, from LastMile AI) — lightweight framework built around MCP: agents connect to MCP servers, with workflow patterns (router, orchestrator, parallel, evaluator-optimiser) out of the box; fits a platform whose tools are already MCP servers. Used for routing conversations to company/retail agents.
 - **Google ADK** — Agent Development Kit with multi-agent hierarchy, session/state management, evaluation tooling and deployment on Google Cloud; model-agnostic.
 
 Selection criteria you can state: does it speak MCP natively, how much control over the loop/prompting, observability hooks, maturity, lock-in, and how easily it fits Temporal for durability.
@@ -270,7 +274,7 @@ Result: auditors can reconstruct exactly which data produced each sentence; anal
 ## Why Temporal for agent and taskbook orchestration? [From resume]
 Agent jobs are **long-running and failure-prone**: many LLM and tool calls, rate limits, flaky legacy systems, human approvals that take days. Temporal gives **durable execution** — workflow state is persisted as an event history, so after a crash or deploy the workflow resumes exactly where it was. You get **automatic retries** with backoff per activity, timeouts, **signals/queries** for human-in-the-loop and progress, cron/schedules, and full visibility of every step (great for audit).
 
-Alternatives considered: Celery/RQ + DB status tables (you re-implement state machines, retries and recovery by hand), Airflow (batch DAG scheduler, not interactive per-request workflows), Step Functions (AWS-only; you also run on Azure/on-prem regions).
+Alternatives considered: Celery/RQ + DB status tables (you re-implement state machines, retries and recovery by hand), Airflow (batch DAG scheduler, not interactive per-request workflows), Step Functions (ties you to AWS).
 
 ## Workflows vs activities — and the determinism rule [Core]
 - **Workflow** code orchestrates; it must be **deterministic** because Temporal **replays** the event history to rebuild state. No network/DB calls, no `datetime.now()`, `random`, or threads inside workflows — use `workflow.now()`, `workflow.random()`, timers.
@@ -285,6 +289,10 @@ from temporalio.common import RetryPolicy
 @activity.defn
 async def draft_section(cam_id: str, section: str) -> str:
     return await llm_draft(cam_id, section)               # side effects live here
+
+@activity.defn
+async def save_draft(cam_id: str, drafts: list[str]) -> None:
+    await repo.save_cam_draft(cam_id, drafts)             # idempotent upsert
 
 @workflow.defn
 class GenerateCamWorkflow:
@@ -307,7 +315,10 @@ class GenerateCamWorkflow:
         ])
         await workflow.execute_activity(save_draft, args=[cam_id, drafts],
                                         start_to_close_timeout=timedelta(seconds=30))
-        await workflow.wait_condition(lambda: self.approved, timeout=timedelta(days=7))  # human review
+        try:                                              # human review, up to 7 days
+            await workflow.wait_condition(lambda: self.approved, timeout=timedelta(days=7))
+        except asyncio.TimeoutError:                      # raised when the timeout elapses
+            return "expired"
         return "approved"
 ```
 
@@ -335,7 +346,7 @@ Layered:
 Run evals in CI on every prompt/model/tool change; keep a **regression set** built from production failures.
 
 ## What do you log/trace for LLM features? [Core]
-Per request: trace id, user/tenant, model + version, prompt template version, token counts (input/cached/output), latency (TTFT and total), each tool call (name, args hash, duration, error), retrieved chunk ids, citations, final output, user feedback. Use OpenTelemetry-style spans (tools like LastMile AI, Langfuse, LangSmith) so you can replay a bad answer end to end. Redact PII; respect retention rules.
+Per request: trace id, user/tenant, model + version, prompt template version, token counts (input/cached/output), latency (TTFT and total), each tool call (name, args hash, duration, error), retrieved chunk ids, citations, final output, user feedback. Use OpenTelemetry-style spans (e.g. Langfuse, LangSmith, or OTel export from your agent framework) so you can replay a bad answer end to end. Redact PII; respect retention rules.
 
 ## Guardrails you'd put around a credit-underwriting assistant [Design]
 - **Input**: authN/authZ, tenant scoping, PII detection, prompt-injection heuristics on uploaded docs.
