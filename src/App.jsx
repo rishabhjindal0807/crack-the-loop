@@ -6,6 +6,7 @@ import DsaTopic from './pages/DsaTopic.jsx';
 import DsaQuestion from './pages/DsaQuestion.jsx';
 import QnaSection from './pages/QnaSection.jsx';
 import Starred from './pages/Starred.jsx';
+import LeetCode from './pages/LeetCode.jsx';
 import { sections } from './data/sections.js';
 import { links } from './data/profile.js';
 
@@ -14,6 +15,7 @@ const nav = [
   { to: '/ui', label: 'UI / Frontend' },
   { to: '/ai', label: 'Agentic AI' },
   { to: '/backend', label: 'Backend' },
+  { to: '/leetcode', label: 'My LeetCode' },
   { to: '/starred', label: '★ Revision' },
 ];
 
@@ -113,6 +115,7 @@ export default function App() {
             <Route key={s.id} path={`/${s.id}/:catId?`} element={<QnaSection section={s} />} />
           ))}
           <Route path="/starred" element={<Starred />} />
+          <Route path="/leetcode" element={<LeetCode />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>

@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { topics, allQuestions } from '../data/dsa/index.js';
 import { useProgress } from '../lib/progress.js';
-import { Card, ProgressBar, Badge, diffColor } from '../components/ui.jsx';
+import { Card, ProgressBar, Badge, LcBadge, diffColor } from '../components/ui.jsx';
+import { lcStatus } from '../data/leetcode.js';
 import { links } from '../data/profile.js';
 
 export default function DsaHome() {
@@ -75,7 +76,10 @@ export default function DsaHome() {
                 <span className="text-xs text-slate-500">· {q.topicTitle}</span>
                 {q.from && <span className="hidden text-xs text-indigo-500 sm:inline">📒 {q.from}</span>}
               </span>
-              <Badge className={diffColor[q.difficulty]}>{q.difficulty}</Badge>
+              <span className="flex items-center gap-2">
+                <LcBadge status={lcStatus(q.lc)} compact />
+                <Badge className={diffColor[q.difficulty]}>{q.difficulty}</Badge>
+              </span>
             </Link>
           ))}
           {results.length === 0 && <p className="px-4 py-6 text-sm text-slate-500">No matches.</p>}

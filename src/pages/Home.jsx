@@ -6,6 +6,7 @@ import { profile, links } from '../data/profile.js';
 import { useProgress } from '../lib/progress.js';
 import { Card, ProgressBar, Badge, diffColor } from '../components/ui.jsx';
 import { dedent } from '../lib/Markdown.jsx';
+import { lcSubmissions } from '../data/leetcode.js';
 
 export default function Home() {
   const p = useProgress();
@@ -42,6 +43,23 @@ export default function Home() {
           <a className="rounded-lg bg-white/15 px-3 py-1.5 hover:bg-white/25" href={links.bosscoder} target="_blank" rel="noreferrer">Bosscoder curriculum ↗</a>
         </div>
       </section>
+
+      <Link to="/leetcode" className="group block">
+        <Card className="flex flex-wrap items-center justify-between gap-4 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-5 transition group-hover:shadow-md dark:border-orange-500/30 dark:from-orange-500/10 dark:to-amber-500/5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">My LeetCode</p>
+            <p className="mt-1 text-lg font-semibold">
+              {lcSubmissions.filter((s) => s.verdict === 'AC').length} solved
+              <span className="ml-2 text-sm font-normal text-slate-500">
+                {['Easy', 'Medium', 'Hard'].map((d) => `${lcSubmissions.filter((s) => s.verdict === 'AC' && s.difficulty === d).length} ${d}`).join(' · ')}
+              </span>
+            </p>
+          </div>
+          <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+            ↻ {lcSubmissions.filter((s) => s.verdict !== 'AC').length} to retry · View dashboard →
+          </span>
+        </Card>
+      </Link>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (

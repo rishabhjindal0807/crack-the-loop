@@ -1,4 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
+import { allQuestions } from '../data/dsa/index.js';
+import { lcStatus } from '../data/leetcode.js';
+
+// DSA problems already accepted on LeetCode start out as "done" (you can still untick them).
+const lcSolved = new Set(allQuestions.filter((q) => lcStatus(q.lc)?.verdict === 'AC').map((q) => q.uid));
+const doneValue = (st, id) => (st.done && id in st.done ? Boolean(st.done[id]) : lcSolved.has(id));
 
 // Progress (done / starred) lives in this browser's localStorage only.
 const KEY = 'prep-progress-v1';
@@ -32,7 +38,8 @@ export function useProgress() {
 
   const toggle = useCallback((kind, id) => {
     const bucket = { ...(state[kind] || {}) };
-    if (bucket[id]) delete bucket[id];
+    if (kind === 'done') bucket[id] = doneValue(state, id) ? 0 : Date.now(); // explicit 0 = unticked
+    else if (bucket[id]) delete bucket[id];
     else bucket[id] = Date.now();
     state = { ...state, [kind]: bucket };
     write(state);
@@ -40,10 +47,10 @@ export function useProgress() {
   }, []);
 
   return {
-    isDone: (id) => Boolean(state.done?.[id]),
+    isDone: (id) => doneValue(state, id),
     isStarred: (id) => Boolean(state.star?.[id]),
     toggleDone: (id) => toggle('done', id),
     toggleStar: (id) => toggle('star', id),
-    doneCount: (ids) => ids.filter((id) => state.done?.[id]).length,
+    doneCount: (ids) => ids.filter((id) => doneValue(state, id)).length,
   };
 }

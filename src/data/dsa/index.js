@@ -20,6 +20,8 @@ import { twoPointersExtra, hashingExtra } from './m1/two-pointers-hashing.js';
 import { stackExtra, linkedListExtra } from './m1/stacks-ll.js';
 import { treesExtra, triesExtra, heapsExtra } from './m1/trees-tries-heaps.js';
 import { greedyExtra, dpExtra, searchingExtra, bitsExtra, recursionExtra } from './m1/greedy-dp-misc.js';
+import { arraysLc, mathsLc, stringsLc, twoPointersLc, searchingLc, hashingLc, dpLc } from './m1/leetcode-extra.js';
+import { arraysLc2, mathsLc2, jsChallenges } from './m1/leetcode-extra-2.js';
 
 // ---- Bosscoder Module 1 (EV-21A) lecture mapping -------------------------------------------
 const meta = {
@@ -40,18 +42,22 @@ const meta = {
 };
 
 const extras = {
-  'two-pointers': twoPointersExtra,
-  hashing: hashingExtra,
+  'two-pointers': [...twoPointersExtra, ...twoPointersLc],
+  hashing: [...hashingExtra, ...hashingLc],
   'stack-queue': stackExtra,
   'linked-list': linkedListExtra,
   trees: treesExtra,
   tries: triesExtra,
   heaps: heapsExtra,
   greedy: greedyExtra,
-  dp: dpExtra,
-  searching: searchingExtra,
+  dp: [...dpExtra, ...dpLc],
+  searching: [...searchingExtra, ...searchingLc],
   bits: bitsExtra,
   recursion: recursionExtra,
+  // from your LeetCode practice history
+  arrays: [...arraysLc, ...arraysLc2],
+  maths: [...mathsLc, ...mathsLc2],
+  strings: stringsLc,
 };
 
 // Existing problems that were also covered in class / assigned as homework.
@@ -112,7 +118,7 @@ const extraConcepts = {
 const order = [
   arrays, bits, maths, searching, recursion, backtracking, sorting,
   twoPointers, hashing, stackQueue, linkedList, trees, tries, heaps, greedy, dp,
-  strings, graphs,
+  strings, graphs, jsChallenges,
 ];
 
 for (const t of order) {

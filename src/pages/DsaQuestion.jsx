@@ -7,7 +7,8 @@ import CodeBlock from '../components/CodeBlock.jsx';
 import { useProgress } from '../lib/progress.js';
 import { runTests } from '../lib/runner.js';
 import { dedent } from '../lib/Markdown.jsx';
-import { Badge, Card, DoneToggle, StarToggle, diffColor } from '../components/ui.jsx';
+import { Badge, Card, DoneToggle, LcBadge, StarToggle, diffColor } from '../components/ui.jsx';
+import { lcStatus } from '../data/leetcode.js';
 import { lcUrl } from './DsaTopic.jsx';
 
 const fmt = (v) => {
@@ -82,12 +83,22 @@ export default function DsaQuestion() {
           {(q.tags || []).map((tg) => (
             <Badge key={tg} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">#{tg}</Badge>
           ))}
-          {q.lc && (
+          <LcBadge status={lcStatus(q.lc)} />
+          {q.lc && !lcStatus(q.lc) && (
             <a href={lcUrl(q.lc)} target="_blank" rel="noreferrer" className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-700 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300">
               {q.lc.includes('geeksforgeeks') ? 'Practice on GfG ↗' : 'Solve on LeetCode ↗'}
             </a>
           )}
         </div>
+
+        {lcStatus(q.lc) && lcStatus(q.lc).verdict !== 'AC' && (
+          <Card className="border-orange-200 bg-orange-50/60 p-4 text-sm dark:border-orange-500/30 dark:bg-orange-500/5">
+            <strong className="text-orange-700 dark:text-orange-300">Your last LeetCode submission: {lcStatus(q.lc).verdictLabel}.</strong>{' '}
+            {lcStatus(q.lc).verdict === 'TLE'
+              ? 'Compare your approach’s complexity with the optimal one below — the constraints usually rule out the brute force.'
+              : 'Run the tests below and check the edge cases in the explanation, then resubmit.'}
+          </Card>
+        )}
 
         <Card className="p-6">
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-400">Problem</h2>

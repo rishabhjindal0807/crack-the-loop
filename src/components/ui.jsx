@@ -63,3 +63,24 @@ export function StarToggle({ on, onClick }) {
     </button>
   );
 }
+
+// LeetCode status chip for a site problem's `lc` slug.
+export function LcBadge({ status, compact = false }) {
+  if (!status) return null;
+  const solved = status.verdict === 'AC';
+  return (
+    <a
+      href={status.url}
+      target="_blank"
+      rel="noreferrer"
+      title={`LeetCode #${status.num}: ${status.verdictLabel}`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+        solved
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+          : 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300'
+      }`}
+    >
+      {solved ? '✓' : '↻'} {compact ? (solved ? 'LC' : status.verdict) : solved ? 'Solved on LeetCode' : `LeetCode: ${status.verdictLabel}`}
+    </a>
+  );
+}

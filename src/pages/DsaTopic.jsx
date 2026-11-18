@@ -3,7 +3,8 @@ import { topicById } from '../data/dsa/index.js';
 import TopicSidebar from '../components/TopicSidebar.jsx';
 import Markdown from '../lib/Markdown.jsx';
 import { useProgress } from '../lib/progress.js';
-import { Badge, Card, DoneToggle, ProgressBar, StarToggle, diffColor } from '../components/ui.jsx';
+import { Badge, Card, DoneToggle, LcBadge, ProgressBar, StarToggle, diffColor } from '../components/ui.jsx';
+import { lcStatus } from '../data/leetcode.js';
 
 export default function DsaTopic() {
   const { topicId } = useParams();
@@ -47,7 +48,8 @@ export default function DsaTopic() {
                   <Link to={`/dsa/${t.id}/${q.id}`} className="min-w-0 flex-1 truncate text-sm font-medium hover:text-indigo-600 dark:hover:text-indigo-400">
                     {q.title}
                   </Link>
-                  {q.lc && (
+                  <LcBadge status={lcStatus(q.lc)} compact />
+                  {q.lc && !lcStatus(q.lc) && (
                     <a href={lcUrl(q.lc)} target="_blank" rel="noreferrer" className="hidden text-xs text-slate-400 hover:text-amber-500 sm:inline">
                       {q.lc.includes('geeksforgeeks') ? 'GfG ↗' : 'LeetCode ↗'}
                     </a>
