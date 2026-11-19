@@ -83,7 +83,6 @@ const classTags = {
   'linked-list/reverse-linked-list': 'Lec 14 – Linked List 1 & 2',
   'linked-list/remove-nth-from-end': 'IL9 – Linked List',
   'linked-list/merge-two-sorted-lists': 'Lec 14 – homework (21)',
-  'linked-list/linked-list-cycle': 'Lec 14 – homework (142)',
   'trees/inorder-traversal': 'Lec 15 – Trees 1 & BST',
   'trees/level-order': 'Lec 15 – Trees 1 (Bosscoder notes)',
   'trees/kth-smallest-bst': 'Lec 16 – BBST & Trees 2',

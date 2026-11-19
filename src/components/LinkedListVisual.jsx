@@ -15,9 +15,11 @@ const PTR_COLORS = {
   fast: '#f97316',
   curr: '#f97316',
   head: '#64748b',
+  ptr1: '#0ea5e9',
+  ptr2: '#10b981',
 };
 
-function Arrow({ x1, x2, y, kind, highlight, id }) {
+function Arrow({ x1, x2, y, kind, highlight, id, depth = 64 }) {
   const color = highlight ? '#f97316' : '#94a3b8';
   const marker = `url(#${highlight ? 'arrowHi' : 'arrow'}-${id})`;
   const sw = highlight ? 2.5 : 1.6;
@@ -30,7 +32,7 @@ function Arrow({ x1, x2, y, kind, highlight, id }) {
   const ex = x2 + (above ? -8 : 8);
   const sy = y + (above ? -BOX.h / 2 : BOX.h / 2);
   const ey = sy + (above ? -3 : 3);
-  const lift = (above ? Math.min(70, 26 + Math.abs(x2 - x1) * 0.18) : 64) * (above ? -1 : 1);
+  const lift = (above ? Math.min(70, 26 + Math.abs(x2 - x1) * 0.18) : depth) * (above ? -1 : 1);
   const d = `M ${sx} ${sy} C ${sx} ${sy + lift}, ${ex} ${ey + lift}, ${ex} ${ey}`;
   return <path d={d} fill="none" stroke={color} strokeWidth={sw} markerEnd={marker} />;
 }
@@ -49,6 +51,19 @@ export default function LinkedListVisual({ visual, uid }) {
     const t = setTimeout(() => setI((x) => x + 1), 1600);
     return () => clearTimeout(t);
   }, [playing, i, steps.length]);
+
+  // Across all steps: are there backward arcs (drawn below) / forward skips (drawn above)?
+  // With only backward arcs, pointer labels go above the nodes so the arcs stay visible.
+  let lay = steps[0].order, hasBack = false, hasFwd = false, maxPills = 1;
+  for (const st of steps) {
+    if (st.order) lay = st.order;
+    const ix = Object.fromEntries(lay.map((n, k) => [n, k]));
+    for (const [a, b] of st.edges) { const d = ix[b] - ix[a]; if (d < 0) hasBack = true; if (d > 1) hasFwd = true; }
+    const per = {}; for (const n of Object.values(st.pointers || {})) per[n] = (per[n] || 0) + 1;
+    maxPills = Math.max(maxPills, ...Object.values(per), 1);
+  }
+  const pillsAbove = hasBack && !hasFwd;
+  const backDepth = pillsAbove ? 64 : Math.max(64, (maxPills * 20 + 22) / 0.75);
 
   // carry forward the last specified layout
   let order = steps[0].order;
@@ -80,7 +95,7 @@ export default function LinkedListVisual({ visual, uid }) {
           {step.edges.map(([a, b]) => {
             const d = idx[b] - idx[a];
             const kind = d === 1 ? 'straight' : d > 1 ? 'forward' : 'backward';
-            return <Arrow key={`${a}-${b}`} x1={pos[a]} x2={pos[b]} y={y} kind={kind} highlight={isChanged(a, b)} id={id} />;
+            return <Arrow key={`${a}-${b}`} x1={pos[a]} x2={pos[b]} y={y} kind={kind} highlight={isChanged(a, b)} id={id} depth={backDepth} />;
           })}
 
           {order.map((n) => (
@@ -107,7 +122,7 @@ export default function LinkedListVisual({ visual, uid }) {
                 </>
               )}
               {(labels[n] || []).map((name, k) => (
-                <g key={name} transform={`translate(0, ${BOX.h / 2 + 18 + k * 20})`}>
+                <g key={name} transform={`translate(0, ${pillsAbove ? -(BOX.h / 2 + 14 + k * 20) : BOX.h / 2 + 18 + k * 20})`}>
                   <rect x={-30} y={-11} width={60} height={18} rx="9" fill={PTR_COLORS[name] || '#64748b'} />
                   <text textAnchor="middle" dy="2" fontSize="11" fontWeight="600" fill="white">
                     {name}

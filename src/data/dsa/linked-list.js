@@ -105,34 +105,99 @@ export default {
     },
     {
       id: 'linked-list-cycle',
-      title: 'Linked List Cycle II (find cycle start)',
+      title: 'Linked List Cycle II',
       difficulty: 'Medium',
       lc: 'linked-list-cycle-ii',
-      tags: ['fast-slow', 'floyd'],
-      statement: 'Return the node where the cycle begins, or null. (Test input: values + `pos`, the index the tail links back to; we return that node’s index.)',
+      from: 'IL9 – Linked List (+ Lec 14 homework 142)',
+      tags: ['fast-slow', 'floyd', 'cycle'],
+      statement: 'Given the `head` of a linked list, return the node where the cycle begins, or `null` if there is no cycle. Do **not** modify the list.\n\nInternally `pos` is the index the tail’s `next` points back to (−1 = no cycle); it is not passed to you. *(Test input here: values + `pos`; the runner reports the index of the node you return.)*',
+      visual: {
+        title: 'Floyd’s algorithm on 1 → 2 → 3 → 4 → 5 → 6, tail links back to 3',
+        steps: [
+          { order: ['1', '2', '3', '4', '5', '6'], edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], changed: [['6', '3']], pointers: { slow: '1', fast: '1' },
+            code: 'let slow = head, fast = head', caption: 'The tail (6) links back to 3 — that is the cycle start we need to find. Both pointers start at head.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], pointers: { slow: '2', fast: '3' },
+            code: 'slow = slow.next; fast = fast.next.next', caption: 'Phase 1: slow moves 1 step, fast moves 2.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], pointers: { slow: '3', fast: '5' },
+            code: 'slow = slow.next; fast = fast.next.next', caption: 'Both are inside the cycle now.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], changed: [['6', '3']], pointers: { slow: '4', fast: '3' },
+            code: 'slow = slow.next; fast = fast.next.next', caption: 'fast went 5 → 6 → 3, round the loop, and is now chasing slow from behind.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], pointers: { slow: '5', fast: '5' },
+            code: 'if (slow == fast) → they meet at 5', caption: 'Inside a loop fast gains one node per step, so it must land on slow. Meeting proves there is a cycle — but 5 is not its start.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], pointers: { ptr1: '1', ptr2: '5' },
+            code: 'let ptr1 = head; let ptr2 = slow', caption: 'Phase 2: one pointer back at head, one at the meeting point.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], pointers: { ptr1: '2', ptr2: '6' },
+            code: 'ptr1 = ptr1.next; ptr2 = ptr2.next', caption: 'Now both move ONE step at a time.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', '6'], ['6', '3']], changed: [['6', '3']], pointers: { ptr1: '3', ptr2: '3' },
+            code: 'ptr1 == ptr2 → return ptr1', caption: 'They meet at 3 — the cycle start. head → 3 is 2 steps, and meeting point 5 → 6 → 3 is also 2 steps. That is always true (see the maths below).' },
+        ],
+      },
       approaches: [
         {
-          name: "Floyd's tortoise & hare",
+          name: 'Hash set of visited nodes',
           time: 'O(n)',
-          space: 'O(1)',
-          idea: 'After slow and fast meet, a pointer from head and one from the meeting point, moving 1 step each, meet at the cycle start (distance math: `a = c·L − b`).',
+          space: 'O(n)',
+          idea: 'Walk the list and remember every node object. The first node you see twice is where the cycle begins.',
           code: `
             function detectCycle(head) {
-              let slow = head, fast = head;
-              while (fast && fast.next) {
-                slow = slow.next;
-                fast = fast.next.next;
-                if (slow === fast) {
-                  let p = head;
-                  while (p !== slow) { p = p.next; slow = slow.next; }
-                  return p;
-                }
+              const seen = new Set();
+              for (let p = head; p; p = p.next) {
+                if (seen.has(p)) return p;
+                seen.add(p);
               }
               return null;
             }
           `,
         },
+        {
+          name: 'Your accepted solution (Floyd, LeetCode)',
+          time: 'O(n)',
+          space: 'O(1)',
+          idea: `
+            **Phase 1:** slow moves 1, fast moves 2 — if fast reaches \`null\` there is no cycle; if they meet, there is one.
+            **Phase 2:** put \`ptr1\` at head and \`ptr2\` at the meeting point and move both one step at a time — they meet exactly at the cycle start.
+          `,
+          code: `
+            var detectCycle = function (head) {
+              if (head == null || head.next == null) return null;
+
+              let slow = head, fast = head;
+
+              while (fast != null && fast.next != null) {
+                slow = slow.next;
+                fast = fast.next.next;
+
+                if (slow == fast) {
+                  let ptr1 = head;
+                  let ptr2 = slow;
+
+                  while (ptr1 != ptr2) {
+                    ptr1 = ptr1.next;
+                    ptr2 = ptr2.next;
+                  }
+                  return ptr1;
+                }
+              }
+              return null;
+            };
+          `,
+        },
       ],
+      explanation: `
+        **Why phase 2 works.** Let **a** = steps from head to the cycle start, **b** = steps from the start to where they meet,
+        **L** = cycle length. When they meet, slow has walked \`a + b\` and fast \`a + b + k·L\` (k extra laps). Fast walks twice as far:
+
+        \`2(a + b) = a + b + k·L\`  ⇒  \`a = k·L − b\`
+
+        \`k·L − b\` is exactly how far the meeting point is from the cycle start going forward (plus whole laps). So a pointer from
+        head and a pointer from the meeting point, both moving 1 step, arrive at the start together. In the visual: a = 2, b = 2, L = 4 ⇒ 2 = 4 − 2 ✓.
+
+        **Edge cases:** empty list or one node with no loop → \`null\` (your early return). A one-node self-loop (\`pos = 0\`) still works:
+        they meet at head, and \`ptr1 == ptr2\` immediately.
+
+        **Interview follow-ups:** *Cycle length?* After meeting, keep one pointer still and count steps until the other comes back.
+        *Linked List Cycle I (LC 141)* is just phase 1. The same idea finds a duplicate in an array (LC 287 — the one you have as TLE!) by treating \`i → nums[i]\` as a linked list.
+      `,
       fn: 'detectCycle',
       input: ([vals, pos], H) => {
         const head = H.list(vals);
@@ -146,6 +211,10 @@ export default {
         { args: [[3, 2, 0, -4], 1], expected: 1 },
         { args: [[1, 2], 0], expected: 0 },
         { args: [[1], -1], expected: -1 },
+        { args: [[1, 2, 3, 4, 5, 6], 2], expected: 2, label: 'the example from the visual' },
+        { args: [[1], 0], expected: 0, label: 'single-node self-loop' },
+        { args: [[1, 2, 3], -1], expected: -1, label: 'no cycle' },
+        { args: [[], -1], expected: -1, label: 'empty list' },
       ],
     },
     {
