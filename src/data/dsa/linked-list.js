@@ -841,6 +841,213 @@ Phase 1 takes $\\lfloor n/2 \\rfloor$ rounds, phase 2 $k$ rounds and phase 3 $k$
       ],
     },
     {
+      id: 'copy-list-random-pointer',
+      title: 'Copy List with Random Pointer',
+      difficulty: 'Medium',
+      lc: 'copy-list-with-random-pointer',
+      from: 'IL9 – Linked List',
+      tags: ['hash-map', 'interleaving', 'deep-copy'],
+      statement: 'Each node has `val`, `next` and an extra `random` pointer that can point to **any** node in the list or `null`. Build a **deep copy**: exactly `n` brand-new nodes with the same values, where the copies’ `next` and `random` pointers mirror the original — and none of them point into the original list.\n\nInput/output format: `[[val, random_index], …]`, e.g. `[[7,null],[13,0],[11,4],[10,2],[1,0]]`. You only get `head`. LeetCode names the node class `_Node(val, next, random)` — the test runner here provides it too.',
+      visual: [
+        {
+          tab: 'Hash map — O(n) space',
+          title: 'Two passes with a map from original → copy',
+          groups: [
+            { label: 'original list', nodes: ['7', '13', '11', '10', '1'], color: '#6366f1' },
+            { label: 'deep copy', nodes: ["7'", "13'", "11'", "10'", "1'"], color: '#10b981' },
+          ],
+          steps: [
+            { order: [["7", "13", "11", "10", "1", "null"], ["", "", "", "", "", ""]], edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }]], pointers: { curr: '7' },
+              code: "const map = new Map()", caption: "The original list. Dashed pink arrows are random pointers (7.random is null). Pass 1 makes a new node for every original node and remembers the pair in a map." },
+            { order: [["7", "13", "11", "10", "1", "null"], ["7'", "", "", "", "", ""]], edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }]], pointers: { curr: '7' },
+              code: "map.set(curr, new _Node(curr.val))", caption: "Pass 1: create 7′ with the same value — a brand-new node — and store map[7] = 7′." },
+            { order: [["7", "13", "11", "10", "1", "null"], ["7'", "13'", "11'", "10'", "1'", ""]], edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }], ['13', "13\'", { map: true }], ['11', "11\'", { map: true }], ['10', "10\'", { map: true }], ['1', "1\'", { map: true }]], pointers: {},
+              code: "curr = curr.next … until null", caption: "After pass 1 there are five new nodes and the map knows which copy belongs to which original. The copies are not linked yet — their next and random are still null." },
+            { order: [["7", "13", "11", "10", "1", "null"], ["7'", "13'", "11'", "10'", "1'", "null2"]], edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }], ['13', "13\'", { map: true }], ['11', "11\'", { map: true }], ['10', "10\'", { map: true }], ['1', "1\'", { map: true }], ["7\'", "13\'"]], changed: [["7\'", "13\'"]], pointers: { curr: '7' },
+              code: "map.get(curr).next = map.get(curr.next); map.get(curr).random = map.get(curr.random)", caption: "Pass 2: wire each copy by asking where the ORIGINAL points, then using the map to jump to that node's copy. 7.next is 13, so 7′.next = map.get(13) = 13′. 7.random is null, so 7′.random stays null." },
+            { edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }], ['13', "13\'", { map: true }], ['11', "11\'", { map: true }], ['10', "10\'", { map: true }], ['1', "1\'", { map: true }], ["7\'", "13\'"], ["13\'", "11\'"], ["13\'", "7\'", { random: true, side: 'below' }]], changed: [["13\'", "11\'"], ["13\'", "7\'"]], pointers: { curr: '13' },
+              code: "map.get(curr).next = map.get(curr.next); map.get(curr).random = map.get(curr.random)", caption: "13.random is 7, so 13′.random = map.get(7) = 7′ — it points into the NEW list, never the old one." },
+            { edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }], ['13', "13\'", { map: true }], ['11', "11\'", { map: true }], ['10', "10\'", { map: true }], ['1', "1\'", { map: true }], ["7\'", "13\'"], ["13\'", "11\'"], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "10\'"], ["11\'", "1\'", { random: true, side: 'below' }]], changed: [["11\'", "10\'"], ["11\'", "1\'"]], pointers: { curr: '11' },
+              code: "map.get(curr).next = map.get(curr.next); map.get(curr).random = map.get(curr.random)", caption: "11.next = 10 → 11′.next = 10′, and 11.random = 1 → 11′.random = 1′." },
+            { edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }], ['13', "13\'", { map: true }], ['11', "11\'", { map: true }], ['10', "10\'", { map: true }], ['1', "1\'", { map: true }], ["7\'", "13\'"], ["13\'", "11\'"], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "10\'"], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "1\'"], ["10\'", "11\'", { random: true, side: 'below' }]], changed: [["10\'", "1\'"], ["10\'", "11\'"]], pointers: { curr: '10' },
+              code: "map.get(curr).next = map.get(curr.next); map.get(curr).random = map.get(curr.random)", caption: "10.random = 11 → 10′.random = 11′." },
+            { edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ['7', "7\'", { map: true }], ['13', "13\'", { map: true }], ['11', "11\'", { map: true }], ['10', "10\'", { map: true }], ['1', "1\'", { map: true }], ["7\'", "13\'"], ["13\'", "11\'"], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "10\'"], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "1\'"], ["10\'", "11\'", { random: true, side: 'below' }], ["1\'", 'null2'], ["1\'", "7\'", { random: true, side: 'below' }]], changed: [["1\'", 'null2'], ["1\'", "7\'"]], pointers: { curr: '1' },
+              code: "map.get(curr).next = map.get(curr.next); map.get(curr).random = map.get(curr.random)", caption: "1.next is null, so 1′.next = null. 1.random = 7 → 1′.random = 7′." },
+            { edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["7\'", "13\'"], ["13\'", "11\'"], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "10\'"], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "1\'"], ["10\'", "11\'", { random: true, side: 'below' }], ["1\'", 'null2'], ["1\'", "7\'", { random: true, side: 'below' }]], pointers: {},
+              code: "return map.get(head)", caption: "Done: 7′ → 13′ → 11′ → 10′ → 1′ has the same values and the same next / random shape as the original, but every node is new. Two passes, O(n) time, O(n) extra space for the map." },
+          ],
+        },
+        {
+          tab: 'Interleave — O(1) space',
+          title: 'Weave copies into the list, set randoms, unweave',
+          groups: [
+            { label: 'original nodes', nodes: ['7', '13', '11', '10', '1'], color: '#6366f1' },
+            { label: 'copies', nodes: ["7'", "13'", "11'", "10'", "1'"], color: '#10b981' },
+          ],
+          steps: [
+            { order: ["7", "13", "11", "10", "1", "null"], edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }]], pointers: { curr: '7' },
+              code: "let curr = head", caption: "Same list. Instead of a map, put each copy right after its original. Then “the copy of X” is simply X.next — the list itself becomes the map." },
+            { order: ["7", "7'", "13", "11", "10", "1", "null"], edges: [['7', "7\'"], ["7\'", '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }]], changed: [['7', "7\'"], ["7\'", '13']], pointers: { curr: '7', copy: "7'" },
+              code: "copy = new _Node(curr.val, curr.next); curr.next = copy", caption: "Pass 1: 7′ takes over 7's next (13), then 7 points at 7′. Move curr to copy.next (13) and repeat." },
+            { order: ["7", "7'", "13", "13'", "11", "11'", "10", "10'", "1", "1'", "null"], edges: [['7', "7\'"], ["7\'", '13'], ['13', "13\'"], ["13\'", '11'], ['11', "11\'"], ["11\'", '10'], ['10', "10\'"], ["10\'", '1'], ['1', "1\'"], ["1\'", 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }]], pointers: {},
+              code: "curr = copy.next … until null", caption: "After pass 1 the list alternates original, copy, original, copy… (length 2n). Every X.next is X′." },
+            { edges: [['7', "7\'"], ["7\'", '13'], ['13', "13\'"], ["13\'", '11'], ['11', "11\'"], ["11\'", '10'], ['10', "10\'"], ["10\'", '1'], ['1', "1\'"], ["1\'", 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["13\'", "7\'", { random: true, side: 'below' }]], changed: [["13\'", "7\'"]], pointers: { curr: '13' },
+              code: "curr.next.random = curr.random ? curr.random.next : null", caption: "Pass 2: 13.random is 7, and 7′ sits right after 7. So 13′.random = 13.random.next = 7′. (7.random is null, so 7′.random stays null.)" },
+            { edges: [['7', "7\'"], ["7\'", '13'], ['13', "13\'"], ["13\'", '11'], ['11', "11\'"], ["11\'", '10'], ['10', "10\'"], ["10\'", '1'], ['1', "1\'"], ["1\'", 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "1\'", { random: true, side: 'below' }]], changed: [["11\'", "1\'"]], pointers: { curr: '11' },
+              code: "curr.next.random = curr.random ? curr.random.next : null", caption: "11.random = 1 → 11′.random = 1.next = 1′." },
+            { edges: [['7', "7\'"], ["7\'", '13'], ['13', "13\'"], ["13\'", '11'], ['11', "11\'"], ["11\'", '10'], ['10', "10\'"], ["10\'", '1'], ['1', "1\'"], ["1\'", 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "11\'", { random: true, side: 'below' }]], changed: [["10\'", "11\'"]], pointers: { curr: '10' },
+              code: "curr.next.random = curr.random ? curr.random.next : null", caption: "10.random = 11 → 10′.random = 11.next = 11′." },
+            { edges: [['7', "7\'"], ["7\'", '13'], ['13', "13\'"], ["13\'", '11'], ['11', "11\'"], ["11\'", '10'], ['10', "10\'"], ["10\'", '1'], ['1', "1\'"], ["1\'", 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "11\'", { random: true, side: 'below' }], ["1\'", "7\'", { random: true, side: 'below' }]], changed: [["1\'", "7\'"]], pointers: { curr: '1' },
+              code: "curr.next.random = curr.random ? curr.random.next : null", caption: "1.random = 7 → 1′.random = 7.next = 7′. Every copy now points at a copy." },
+            { edges: [['7', '13'], ["7\'", "13\'"], ['13', "13\'"], ["13\'", '11'], ['11', "11\'"], ["11\'", '10'], ['10', "10\'"], ["10\'", '1'], ['1', "1\'"], ["1\'", 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "11\'", { random: true, side: 'below' }], ["1\'", "7\'", { random: true, side: 'below' }]], changed: [['7', '13'], ["7\'", "13\'"]], pointers: { curr: '7', copy: "7'" },
+              code: "curr.next = copy.next; copy.next = copy.next ? copy.next.next : null", caption: "Pass 3: unweave. 7 skips its copy and points back at 13; 7′ skips 13 and points at 13′. Repeat for every pair." },
+            { order: [["7", "13", "11", "10", "1", "null"], ["7'", "13'", "11'", "10'", "1'", "null2"]], edges: [['7', '13'], ['13', '11'], ['11', '10'], ['10', '1'], ['1', 'null'], ['13', '7', { random: true, side: 'above' }], ['11', '1', { random: true, side: 'above' }], ['10', '11', { random: true, side: 'above' }], ['1', '7', { random: true, side: 'above' }], ["7\'", "13\'"], ["13\'", "11\'"], ["11\'", "10\'"], ["10\'", "1\'"], ["1\'", 'null2'], ["13\'", "7\'", { random: true, side: 'below' }], ["11\'", "1\'", { random: true, side: 'below' }], ["10\'", "11\'", { random: true, side: 'below' }], ["1\'", "7\'", { random: true, side: 'below' }]], pointers: {},
+              code: "return newHead  // = head.next before unweaving", caption: "Two separate lists again. The original is restored exactly (LeetCode checks it), and the copy has the same next / random shape. Three passes, O(n) time, O(1) extra space." },
+          ],
+        },
+      ],
+      approaches: [
+        {
+          name: 'Hash map: original → copy',
+          time: 'O(n)',
+          space: 'O(n)',
+          idea: `
+            **Pass 1:** walk the list and create a copy of every node, storing \`map.set(original, copy)\`.
+            **Pass 2:** walk again and wire each copy: \`copy.next = map.get(curr.next)\`, \`copy.random = map.get(curr.random)\`.
+            Two passes are needed because a random pointer can point *ahead* to a node we have not copied yet.
+          `,
+          code: `
+            var copyRandomList = function (head) {
+              if (head == null) return null;
+              const map = new Map(); // original node -> its copy
+
+              // pass 1: create every copy
+              for (let curr = head; curr != null; curr = curr.next) {
+                map.set(curr, new _Node(curr.val, null, null));
+              }
+
+              // pass 2: connect next and random using the map
+              for (let curr = head; curr != null; curr = curr.next) {
+                const copy = map.get(curr);
+                copy.next = curr.next ? map.get(curr.next) : null;
+                copy.random = curr.random ? map.get(curr.random) : null;
+              }
+              return map.get(head);
+            };
+          `,
+        },
+        {
+          name: 'Interleave copies in place (O(1) space)',
+          time: 'O(n)',
+          space: 'O(1)',
+          idea: `
+            Replace the map with the list itself. **Pass 1:** insert each copy right after its original (A → A′ → B → B′ …), so the copy of
+            any node \`x\` is \`x.next\`. **Pass 2:** \`x.next.random = x.random.next\`. **Pass 3:** unweave the two lists, restoring the original.
+          `,
+          code: `
+            var copyRandomList = function (head) {
+              if (head == null) return null;
+
+              // pass 1: weave — A -> A' -> B -> B' -> ...
+              for (let curr = head; curr != null; curr = curr.next.next) {
+                curr.next = new _Node(curr.val, curr.next, null);
+              }
+
+              // pass 2: the copy of curr.random is curr.random.next
+              for (let curr = head; curr != null; curr = curr.next.next) {
+                if (curr.random != null) curr.next.random = curr.random.next;
+              }
+
+              // pass 3: unweave and restore the original list
+              const newHead = head.next;
+              for (let curr = head; curr != null; curr = curr.next) {
+                const copy = curr.next;
+                curr.next = copy.next;
+                copy.next = copy.next ? copy.next.next : null;
+              }
+              return newHead;
+            };
+          `,
+        },
+      ],
+      math: {
+        body: `
+Write $f(x)$ for "the copy of node $x$", with $f(\\text{null}) = \\text{null}$. A correct deep copy needs, for every original node $x$:
+
+$$f(x).\\text{val} = x.\\text{val}, \\qquad f(x).\\text{next} = f(x.\\text{next}), \\qquad f(x).\\text{random} = f(x.\\text{random})$$
+
+and every $f(x)$ must be a **new** node. Then any path of next / random pointers in the original has exactly the same shape in the copy.
+
+#### Approach 1 — hash map
+
+**Pass 1** creates one new node per original and stores it: the map *is* $f$. It is one-to-one, because each original gets its own \`new _Node\`, so the copy has exactly $n$ nodes.
+
+**Pass 2** sets, for each $x$,
+
+$$\\texttt{map.get}(x).\\text{next} = \\texttt{map.get}(x.\\text{next}) = f(x.\\text{next}), \\qquad \\texttt{map.get}(x).\\text{random} = f(x.\\text{random})$$
+
+which are exactly the two conditions above. Every pointer we write is a value read from the map, so it can only point at a copy (or null) — never into the original list.
+
+Cost: $n$ map inserts plus $2n$ lookups, each $O(1)$ on average ⇒ $O(n)$ time; the map holds $n$ entries ⇒ $O(n)$ extra space.
+
+#### Approach 2 — interleaving (no map)
+
+After **pass 1** the list is $L_0, f(L_0), L_1, f(L_1), \\dots$ — position $2i$ holds $L_i$ and position $2i+1$ holds its copy. So for every original node:
+
+$$x.\\text{next} = f(x) \\qquad\\text{and}\\qquad f(x).\\text{next} = \\text{(original) } x.\\text{next}$$
+
+The map is stored in the list itself: $f(x)$ is just \`x.next\`.
+
+**Pass 2** sets \`x.next.random = x.random.next\`. Using $x.\\text{next} = f(x)$ on both sides:
+
+$$f(x).\\text{random} = x.\\text{random}.\\text{next} = f(x.\\text{random})$$
+
+— the same rule as approach 1. (If $x.\\text{random}$ is null we leave $f(x).\\text{random}$ as null.)
+
+**Pass 3** relinks positions two apart: original $L_i.\\text{next} \\leftarrow L_{i+1}$ and copy $f(L_i).\\text{next} \\leftarrow f(L_{i+1})$, giving $f(x).\\text{next} = f(x.\\text{next})$ and restoring the original list exactly.
+
+**Why pass 2 must finish before pass 3:** a random pointer can point forwards or backwards. If we unwove while setting randoms, some $y = x.\\text{random}$ might already have its original \`next\` back, so $y.\\text{next}$ would be an original node and the copy would point into the old list.
+
+Cost: three passes over $2n$ nodes ⇒ $O(n)$ time. Apart from the $n$ nodes we must return, only a few pointer variables ⇒ $O(1)$ extra space.
+`,
+      },
+      explanation: `
+        **What “deep copy” is testing:** the copy must not share any node with the original. A common bug is
+        \`copy.random = curr.random\` — that points into the old list. The checker on this page reports exactly that.
+
+        **Which one to say in an interview:** start with the hash map (easy to explain and get right), then offer the O(1)-space
+        weave as the follow-up. Mention that the weave temporarily changes the input and restores it in pass 3.
+
+        **Duplicate values are fine:** both approaches match nodes by *identity* (the object), never by \`val\` — see the
+        \`[[3,null],[3,0],[3,null]]\` test.
+
+        **Same idea elsewhere:** Clone Graph (LC 133) uses the same “original → copy” map, usually with DFS or BFS.
+      `,
+      fn: 'copyRandomList',
+      input: (a, H) => {
+        const head = H.randomList(a[0]);
+        const originals = new Set();
+        for (let p = head; p; p = p.next) originals.add(p);
+        return [head, originals, H.randomArr(head)];
+      },
+      output: (copy, H, args) => {
+        const [head, originals, before] = args;
+        for (let p = copy; p; p = p.next) {
+          if (originals.has(p)) return 'not a deep copy — the result contains an original node';
+          if (p.random && originals.has(p.random)) return 'a random pointer points into the original list';
+        }
+        if (JSON.stringify(H.randomArr(head)) !== JSON.stringify(before)) return 'the original list was not restored';
+        return H.randomArr(copy);
+      },
+      tests: [
+        { args: [[[7, null], [13, 0], [11, 4], [10, 2], [1, 0]]], expected: [[7, null], [13, 0], [11, 4], [10, 2], [1, 0]], label: 'example from the visual' },
+        { args: [[[1, 1], [2, 1]]], expected: [[1, 1], [2, 1]], label: 'random points to self' },
+        { args: [[[3, null], [3, 0], [3, null]]], expected: [[3, null], [3, 0], [3, null]], label: 'duplicate values' },
+        { args: [[[5, 0]]], expected: [[5, 0]], label: 'single node, self random' },
+        { args: [[]], expected: [], label: 'empty list' },
+      ],
+    },
+    {
       id: 'lru-cache',
       title: 'LRU Cache',
       difficulty: 'Medium',

@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 
 // Step-through diagram of linked-list pointer changes.
-// visual = { title, steps: [{ order: ['D','1',…,'null'], edges: [['D','1'], …], changed: [['1','3']],
-//            pointers: { prev: 'D', first: '1' }, code: 'first.next = second.next', caption: '…' }] }
-// `order` may be omitted to reuse the previous step's layout.
+// visual = { title, groups?, steps: [{ order, edges, changed, pointers, code, caption }] }
+// - order: ['D','1',…,'null'] for one row, or [[…top row…], […bottom row…]] for two rows.
+//   '' leaves a slot empty; 'D' is a dummy node; ids starting with 'null' render as null;
+//   a trailing ' becomes a prime (7' → 7′). Omit order to reuse the previous step's layout.
+// - edges: [a, b] for next pointers, or [a, b, { random: true, side: 'above' | 'below', map: true }].
+//   random = dashed pink random pointer, map = dotted original → copy link.
+// - changed: [[a, b], …] edges drawn in orange this step.
 
 const W = 96; // horizontal spacing
 const BOX = { w: 52, h: 34 };
+const ROW_GAP = 170;
+const GREY = '#94a3b8';
+const ORANGE = '#f97316';
+const PINK = '#ec4899';
+const MAPC = '#cbd5e1';
 const PTR_COLORS = {
   prev: '#6366f1',
   first: '#f97316',
@@ -23,23 +32,49 @@ const PTR_COLORS = {
   secondlist: '#10b981',
   temp: '#64748b',
   next: '#94a3b8',
+  copy: '#10b981',
 };
 
-function Arrow({ x1, x2, y, kind, highlight, id, depth = 64, color = highlight ? '#f97316' : '#94a3b8' }) {
-  const marker = `url(#m${color.slice(1)}-${id})`;
-  const sw = highlight ? 2.5 : 1.6;
-  if (kind === 'straight') {
-    return <line x1={x1 + BOX.w / 2} y1={y} x2={x2 - BOX.w / 2 - 4} y2={y} stroke={color} strokeWidth={sw} markerEnd={marker} />;
+const rowsOf = (order) => (Array.isArray(order[0]) ? order : [order]);
+const isNull = (n) => n.startsWith('null');
+const label = (n) => (n === 'D' ? 'dummy' : n.replace(/'$/, '′'));
+
+function layout(order, maxCols = 0) {
+  const rows = rowsOf(order);
+  const multi = rows.length > 1;
+  const y0 = multi ? 100 : 82;
+  const cols = Math.max(...rows.map((row) => row.length));
+  const off = maxCols > cols ? ((maxCols - cols) * W) / 2 : 0; // centre narrower layouts
+  const pos = {};
+  rows.forEach((row, r) => row.forEach((n, c) => { if (n) pos[n] = { x: 40 + off + c * W, y: y0 + r * ROW_GAP, r, c }; }));
+  return { rows, multi, pos, height: multi ? y0 + (rows.length - 1) * ROW_GAP + 90 : 190 };
+}
+
+function edgeGeometry(pa, pb, opts, multi, depth) {
+  const h = BOX.h / 2;
+  if (pa === pb) {
+    // self loop on the outer side
+    const up = (opts.side || (pa.r > 0 ? 'below' : 'above')) === 'above';
+    const s = up ? -1 : 1;
+    const y = pa.y + s * h;
+    return `M ${pa.x - 10} ${y} C ${pa.x - 30} ${y + s * 42}, ${pa.x + 30} ${y + s * 42}, ${pa.x + 12} ${y + s * 3}`;
   }
-  // forward skip → arc above; backward → arc below
-  const above = kind === 'forward';
-  const sx = x1 + (above ? 8 : -8);
-  const ex = x2 + (above ? -8 : 8);
-  const sy = y + (above ? -BOX.h / 2 : BOX.h / 2);
+  if (pa.r !== pb.r) {
+    const s = pb.r > pa.r ? 1 : -1;
+    const sy = pa.y + s * h, ey = pb.y - s * (h + 4);
+    const my = (sy + ey) / 2;
+    return pa.x === pb.x ? `M ${pa.x} ${sy} L ${pb.x} ${ey}` : `M ${pa.x} ${sy} C ${pa.x} ${my}, ${pb.x} ${my}, ${pb.x} ${ey}`;
+  }
+  const dc = pb.c - pa.c;
+  if (!opts.random && !opts.side && dc === 1) return { straight: true };
+  const side = opts.side || (multi ? (pa.r === 0 ? 'above' : 'below') : dc > 0 ? 'above' : 'below');
+  const above = side === 'above';
+  const dir = Math.sign(dc);
+  const sx = pa.x + 8 * dir, ex = pb.x - 8 * dir;
+  const sy = pa.y + (above ? -h : h);
   const ey = sy + (above ? -3 : 3);
-  const lift = (above ? Math.min(70, 26 + Math.abs(x2 - x1) * 0.18) : depth) * (above ? -1 : 1);
-  const d = `M ${sx} ${sy} C ${sx} ${sy + lift}, ${ex} ${ey + lift}, ${ex} ${ey}`;
-  return <path d={d} fill="none" stroke={color} strokeWidth={sw} markerEnd={marker} />;
+  const lift = (above ? Math.min(70, 26 + Math.abs(pb.x - pa.x) * 0.18) : depth) * (above ? -1 : 1);
+  return `M ${sx} ${sy} C ${sx} ${sy + lift}, ${ex} ${ey + lift}, ${ex} ${ey}`;
 }
 
 export default function LinkedListVisual({ visual, uid }) {
@@ -57,64 +92,82 @@ export default function LinkedListVisual({ visual, uid }) {
     return () => clearTimeout(t);
   }, [playing, i, steps.length]);
 
-  // Across all steps: are there backward arcs (drawn below) / forward skips (drawn above)?
+  // Across all steps: backward arcs (below) vs forward skips (above), widest layout, random/map links.
   // With only backward arcs, pointer labels go above the nodes so the arcs stay visible.
-  let lay = steps[0].order, hasBack = false, hasFwd = false, maxPills = 1;
+  let lay = steps[0].order, hasBack = false, hasFwd = false, maxPills = 1, maxCols = 1, hasRandom = false, hasMap = false;
   for (const st of steps) {
     if (st.order) lay = st.order;
-    const ix = Object.fromEntries(lay.map((n, k) => [n, k]));
-    for (const [a, b] of st.edges) { const d = ix[b] - ix[a]; if (d < 0) hasBack = true; if (d > 1) hasFwd = true; }
-    const per = {}; for (const n of Object.values(st.pointers || {})) per[n] = (per[n] || 0) + 1;
+    const L = layout(lay);
+    maxCols = Math.max(maxCols, ...L.rows.map((r) => r.length));
+    for (const [a, b, o = {}] of st.edges) {
+      if (o.random) hasRandom = true;
+      if (o.map) hasMap = true;
+      const pa = L.pos[a], pb = L.pos[b];
+      if (o.random || o.map || o.side || !pa || !pb || pa.r !== pb.r) continue;
+      if (pb.c < pa.c) hasBack = true;
+      if (pb.c - pa.c > 1) hasFwd = true;
+    }
+    const per = {};
+    for (const n of Object.values(st.pointers || {})) per[n] = (per[n] || 0) + 1;
     maxPills = Math.max(maxPills, ...Object.values(per), 1);
   }
-  const pillsAbove = hasBack && !hasFwd;
+  const pillsAbove = visual.pillsAbove ?? (hasBack && !hasFwd);
   const backDepth = pillsAbove ? 64 : Math.max(64, (maxPills * 20 + 22) / 0.75);
 
   // carry forward the last specified layout
   let order = steps[0].order;
   for (let k = 0; k <= i; k++) if (steps[k].order) order = steps[k].order;
   const step = steps[i];
-  const pos = Object.fromEntries(order.map((n, k) => [n, 40 + k * W]));
-  const idx = Object.fromEntries(order.map((n, k) => [n, k]));
-  const y = 82;
-  const width = 40 + (order.length - 1) * W + 50;
+  const { multi, pos, height } = layout(order, maxCols);
+  const width = 40 + (maxCols - 1) * W + 50;
   const isChanged = (a, b) => (step.changed || []).some(([x, z]) => x === a && z === b);
   const id = uid.replace(/[^a-z0-9]/gi, '');
 
   // optional colour groups, e.g. the odd chain and the even chain
   const groups = visual.groups || [];
   const groupOf = (n) => groups.find((g) => g.nodes.includes(n));
-  const edgeColor = (a, b) => {
-    if (isChanged(a, b)) return '#f97316';
+  const edgeColor = (a, b, o) => {
+    if (isChanged(a, b)) return ORANGE;
+    if (o.random) return PINK;
+    if (o.map) return MAPC;
     const g = groupOf(a);
-    return g && (b === 'null' || groupOf(b) === g) ? g.color : '#94a3b8';
+    return g && (isNull(b) || groupOf(b) === g) ? g.color : GREY;
   };
 
   // group pointer labels by node
   const labels = {};
   for (const [name, node] of Object.entries(step.pointers || {})) (labels[node] ||= []).push(name);
+  const marker = (c) => `url(#m${c.slice(1)}-${id})`;
 
   return (
     <div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
-        <svg viewBox={`0 0 ${width} 190`} className="min-w-[560px]" role="img" aria-label={step.caption}>
+        <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[560px]" role="img" aria-label={step.caption}>
           <defs>
-            {['#94a3b8', '#f97316', ...groups.map((g) => g.color)].map((c) => (
+            {[...new Set([GREY, ORANGE, PINK, MAPC, ...groups.map((g) => g.color)])].map((c) => (
               <marker key={c} id={`m${c.slice(1)}-${id}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill={c} />
               </marker>
             ))}
           </defs>
 
-          {step.edges.map(([a, b]) => {
-            const d = idx[b] - idx[a];
-            const kind = d === 1 ? 'straight' : d > 1 ? 'forward' : 'backward';
-            return <Arrow key={`${a}-${b}`} x1={pos[a]} x2={pos[b]} y={y} kind={kind} highlight={isChanged(a, b)} color={edgeColor(a, b)} id={id} depth={backDepth} />;
+          {step.edges.map(([a, b, o = {}]) => {
+            const pa = pos[a], pb = pos[b];
+            if (!pa || !pb) return null;
+            const color = edgeColor(a, b, o);
+            const sw = isChanged(a, b) ? 2.5 : o.map ? 1.4 : 1.6;
+            const dash = o.random ? '5 4' : o.map ? '2 4' : undefined;
+            const g = edgeGeometry(pa, pb, o, multi, backDepth);
+            const key = `${a}-${b}-${o.random ? 'r' : o.map ? 'm' : 'n'}`;
+            if (g.straight) {
+              return <line key={key} x1={pa.x + BOX.w / 2} y1={pa.y} x2={pb.x - BOX.w / 2 - 4} y2={pb.y} stroke={color} strokeWidth={sw} markerEnd={marker(color)} />;
+            }
+            return <path key={key} d={g} fill="none" stroke={color} strokeWidth={sw} strokeDasharray={dash} markerEnd={marker(color)} />;
           })}
 
-          {order.map((n) => (
-            <g key={n} transform={`translate(${pos[n]}, ${y})`}>
-              {n === 'null' ? (
+          {Object.entries(pos).map(([n, p]) => (
+            <g key={n} transform={`translate(${p.x}, ${p.y})`}>
+              {isNull(n) ? (
                 <text textAnchor="middle" dy="5" className="fill-slate-400" fontSize="14" fontFamily="ui-monospace, monospace">
                   null
                 </text>
@@ -132,7 +185,7 @@ export default function LinkedListVisual({ visual, uid }) {
                     strokeDasharray={n === 'D' ? '4 3' : undefined}
                   />
                   <text textAnchor="middle" dy={n === 'D' ? 4 : 5} fontSize={n === 'D' ? 11 : 15} fontWeight="600" className="fill-slate-700 dark:fill-slate-200">
-                    {n === 'D' ? 'dummy' : n}
+                    {label(n)}
                   </text>
                 </>
               )}
@@ -149,13 +202,23 @@ export default function LinkedListVisual({ visual, uid }) {
         </svg>
       </div>
 
-      {groups.length > 0 && (
+      {(groups.length > 0 || hasRandom || hasMap) && (
         <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
           {groups.map((g) => (
             <span key={g.label} className="flex items-center gap-1.5">
               <span className="inline-block h-0.5 w-5 rounded" style={{ background: g.color }} /> {g.label}
             </span>
           ))}
+          {hasRandom && (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-5 border-t-2 border-dashed" style={{ borderColor: PINK }} /> random pointer
+            </span>
+          )}
+          {hasMap && (
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-5 border-t-2 border-dotted border-slate-300" /> map: original → copy
+            </span>
+          )}
           <span className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 rounded bg-orange-500" /> link changed in this step</span>
         </div>
       )}

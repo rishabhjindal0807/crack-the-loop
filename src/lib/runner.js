@@ -1,6 +1,6 @@
 // Runs a solution's JS source against its test cases. Shared by the browser "Run tests" button
 // and by scripts/test-solutions.mjs (which checks every approach of every problem before deploy).
-import { ListNode, TreeNode, H } from './helpers.js';
+import { ListNode, TreeNode, RandomNode, H } from './helpers.js';
 
 const clone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
 
@@ -18,7 +18,7 @@ function canon(v, mode) {
 
 export function loadFn(code, fn) {
   // eslint-disable-next-line no-new-func
-  return new Function('ListNode', 'TreeNode', `"use strict";\n${code}\n;return ${fn};`)(ListNode, TreeNode);
+  return new Function('ListNode', 'TreeNode', '_Node', 'Node', `"use strict";\n${code}\n;return ${fn};`)(ListNode, TreeNode, RandomNode, RandomNode);
 }
 
 export function runTests(q, code) {

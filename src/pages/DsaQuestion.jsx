@@ -58,10 +58,13 @@ export default function DsaQuestion() {
   const idx = t ? t.questions.findIndex((q) => q.id === qid) : -1;
   const q = idx >= 0 ? t.questions[idx] : null;
   const [tab, setTab] = useState(null);
+  const [vtab, setVtab] = useState(0);
   const p = useProgress();
   if (!q) return <p>Problem not found. <Link className="text-indigo-600" to="/dsa">Back to DSA</Link></p>;
 
   const uid = `${t.id}/${q.id}`;
+  const visuals = q.visual ? (Array.isArray(q.visual) ? q.visual : [q.visual]) : [];
+  const vi = Math.min(vtab, Math.max(0, visuals.length - 1));
   const active = tab !== null && tab < q.approaches.length ? tab : q.approaches.length - 1;
   const ap = q.approaches[active];
   const prev = t.questions[idx - 1];
@@ -112,11 +115,21 @@ export default function DsaQuestion() {
           <Markdown>{q.statement}</Markdown>
         </Card>
 
-        {q.visual && (
+        {visuals.length > 0 && (
           <Card className="p-6">
             <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-400">Step-by-step visual</h2>
-            {q.visual.title && <p className="mb-3 text-sm text-slate-500">{q.visual.title}</p>}
-            <LinkedListVisual visual={q.visual} uid={uid} />
+            {visuals.length > 1 && (
+              <div className="mb-3 mt-2 flex flex-wrap gap-2">
+                {visuals.map((v, k) => (
+                  <button key={k} onClick={() => setVtab(k)}
+                    className={`rounded-lg border px-3 py-1.5 text-sm ${k === vi ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300' : 'border-slate-200 dark:border-slate-700'}`}>
+                    {v.tab || `Visual ${k + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+            {visuals[vi].title && <p className="mb-3 text-sm text-slate-500">{visuals[vi].title}</p>}
+            <LinkedListVisual key={`${uid}-${vi}`} visual={visuals[vi]} uid={`${uid}-${vi}`} />
           </Card>
         )}
 
