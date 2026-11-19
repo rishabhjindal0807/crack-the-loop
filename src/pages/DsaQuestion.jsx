@@ -5,6 +5,7 @@ import TopicSidebar from '../components/TopicSidebar.jsx';
 import Markdown from '../lib/Markdown.jsx';
 import CodeBlock from '../components/CodeBlock.jsx';
 import LinkedListVisual from '../components/LinkedListVisual.jsx';
+import { figures } from '../components/ProofFigures.jsx';
 import { useProgress } from '../lib/progress.js';
 import { runTests } from '../lib/runner.js';
 import { dedent } from '../lib/Markdown.jsx';
@@ -139,6 +140,18 @@ export default function DsaQuestion() {
           <CodeBlock code={ap.code} />
           <TestRunner q={q} code={ap.code} />
         </Card>
+
+        {q.math && (
+          <Card className="p-6">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-400">Mathematical proof</h2>
+            {q.math.figure && figures[q.math.figure] && (
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+                {(() => { const F = figures[q.math.figure]; return <F />; })()}
+              </div>
+            )}
+            <Markdown math className="prose-table:mx-auto prose-table:w-auto prose-th:px-6 prose-td:px-6">{q.math.body}</Markdown>
+          </Card>
+        )}
 
         {q.explanation && (
           <Card className="p-6">

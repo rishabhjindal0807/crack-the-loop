@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { dedent } from './dedent.js';
-import { marked } from 'marked';
+import { marked, Marked } from 'marked';
+import markedKatex from 'marked-katex-extension';
+import 'katex/dist/katex.min.css';
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
@@ -32,7 +34,7 @@ hljs.registerLanguage('dockerfile', dockerfile);
 
 export { hljs };
 
-marked.use({
+const codeRenderer = {
   gfm: true,
   renderer: {
     code({ text, lang }) {
@@ -41,14 +43,19 @@ marked.use({
       return `<pre class="hljs-pre"><code class="hljs language-${l}">${html}</code></pre>`;
     },
   },
-});
+};
+marked.use(codeRenderer);
+
+// Separate instance with $inline$ / $$display$$ maths — only used where `math` is set,
+// so dollar signs elsewhere (shell vars, prices) are left alone.
+const mathMarked = new Marked(codeRenderer, markedKatex({ throwOnError: false, nonStandard: true }));
 
 function escape(s) {
   return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 }
 
-export default function Markdown({ children, className = '' }) {
-  const html = useMemo(() => marked.parse(dedent(children || '')), [children]);
+export default function Markdown({ children, className = '', math = false }) {
+  const html = useMemo(() => (math ? mathMarked : marked).parse(dedent(children || '')), [children, math]);
   return (
     <div
       className={`prose prose-slate dark:prose-invert max-w-none prose-pre:p-0 prose-pre:bg-transparent prose-code:before:content-none prose-code:after:content-none ${className}`}

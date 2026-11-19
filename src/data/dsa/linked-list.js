@@ -183,14 +183,82 @@ export default {
           `,
         },
       ],
+      math: {
+        figure: 'floyd-cycle',
+        body: `
+**Notation** (see the figure)
+
+- $a$ — steps from head to the cycle start $S$ &nbsp;(here $a = 2$)
+- $L$ — number of nodes in the cycle &nbsp;(here $L = 4$)
+- $b$ — steps from $S$ forward to the meeting point $M$, with $0 \\le b < L$ &nbsp;(here $b = 2$)
+- $t$ — loop iterations until slow and fast meet
+
+#### Step 1 — If there is a cycle, slow and fast must meet
+
+After $a$ steps slow enters the cycle, and fast is already inside it. Let $g$ be how many nodes fast is *behind* slow, counted forward around the cycle, so $0 \\le g < L$.
+Every iteration fast moves 2 and slow moves 1, so the gap shrinks by exactly one:
+
+$$g \\;\\to\\; g-1 \\;\\to\\; g-2 \\;\\to\\; \\cdots \\;\\to\\; 0$$
+
+Because it drops by 1 each time, fast can never jump over slow — they land on the same node within $g < L$ more steps.
+With no cycle, fast reaches \`null\` first and we return \`null\`.
+
+#### Step 2 — Slow has not finished a lap when they meet
+
+Slow enters the cycle at step $a$ and they meet fewer than $L$ steps later, so slow is less than one lap past $S$:
+
+$$\\text{slow walked:}\\qquad t = a + b, \\qquad 0 \\le b < L$$
+
+#### Step 3 — Fast walked twice as far
+
+Fast stands on the same node $M$, so it walked the same path plus some whole number $k \\ge 1$ of extra laps:
+
+$$\\text{fast walked:}\\qquad 2t = a + b + kL$$
+
+Substitute $t = a + b$:
+
+$$2(a + b) = a + b + kL \\quad\\Longrightarrow\\quad a + b = kL$$
+
+$$\\boxed{\\;a = kL - b = (k-1)\\,L + (L - b)\\;}$$
+
+#### Step 4 — What the formula means
+
+$L - b$ is the distance from $M$ forward to $S$ (the orange arc). So a pointer that starts at $M$ and walks $a$ steps first covers $L - b$ steps to reach $S$, then $(k-1)$ full laps that bring it back to $S$.
+A pointer from head that walks the same $a$ steps also arrives at $S$ — so **ptr1 (from head) and ptr2 (from $M$), moving one step at a time, are both at $S$ after exactly $a$ steps.**
+
+They can't meet any earlier: until step $a$, ptr1 is still on the tail, while ptr2 never leaves the cycle.
+
+#### Check it on the example
+
+| iteration $t$ | slow | fast |
+|:-:|:-:|:-:|
+| 0 | 1 | 1 |
+| 1 | 2 | 3 |
+| 2 | 3 | 5 |
+| 3 | 4 | 3 |
+| 4 | **5** | **5** |
+
+They meet at $t = 4$. Slow walked $4 = a + b = 2 + 2$ ✓. Fast walked $8 = a + b + kL = 4 + k \\cdot 4$, so $k = 1$ ✓.
+Then $a = kL - b = 4 - 2 = 2$: ptr1 goes $1 \\to 2 \\to 3$ and ptr2 goes $5 \\to 6 \\to 3$ — both reach 3 in 2 steps ✓.
+
+#### Edge cases fall out of the same equation
+
+- **Cycle starts at head** ($a = 0$): $b = kL$ with $0 \\le b < L$ forces $b = 0$ — they meet at head, and \`ptr1 == ptr2\` straight away.
+- **Self-loop** ($L = 1$): again $b = 0$, so they meet on the node itself.
+
+#### Complexity
+
+Phase 1 runs at most $a + g < a + L \\le n$ iterations, phase 2 exactly $a \\le n$, so time is $O(n)$ and extra space is $O(1)$.
+
+#### Why fast moves exactly 2
+
+With speeds 2 and 1 the gap closes by 1 per step, so it can't skip past 0. With speed 3 the gap closes by 2 — if $L$ is even and $g$ is odd, fast jumps over slow forever. Speed 2 is the choice that always works, and it is what gives $a = kL - b$.
+
+**Bonus — cycle length:** after they meet, keep one pointer at $M$ and walk the other until it returns; the number of steps is $L$.
+`,
+      },
       explanation: `
-        **Why phase 2 works.** Let **a** = steps from head to the cycle start, **b** = steps from the start to where they meet,
-        **L** = cycle length. When they meet, slow has walked \`a + b\` and fast \`a + b + k·L\` (k extra laps). Fast walks twice as far:
-
-        \`2(a + b) = a + b + k·L\`  ⇒  \`a = k·L − b\`
-
-        \`k·L − b\` is exactly how far the meeting point is from the cycle start going forward (plus whole laps). So a pointer from
-        head and a pointer from the meeting point, both moving 1 step, arrive at the start together. In the visual: a = 2, b = 2, L = 4 ⇒ 2 = 4 − 2 ✓.
+        **The proof** is in the *Mathematical proof* card above — in one line: \`a = kL − b\`, so head and the meeting point are the same distance from the cycle start.
 
         **Edge cases:** empty list or one node with no loop → \`null\` (your early return). A one-node self-loop (\`pos = 0\`) still works:
         they meet at head, and \`ptr1 == ptr2\` immediately.
