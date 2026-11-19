@@ -9,7 +9,7 @@ A personal interview-preparation site with four tracks:
 | Track | What's inside |
 |---|---|
 | **DSA** | 191 problems in 18 topics, following Bosscoder Module 1 in class order (Lectures 1–20 + IL1–IL8 — every class and homework problem, tagged 📒 with its lecture), plus strings and graphs. Brute-force → optimal **JavaScript** solutions, complexity, explanation, and a **Run tests** button that executes the code in your browser. |
-| **UI / Frontend** | JavaScript, machine-coding polyfills, React 18, TypeScript, Angular/RxJS, performance, accessibility, security and frontend system design |
+| **UI / Frontend** | Walmart SDE-3 loop questions, JavaScript, machine-coding polyfills, React 18, TypeScript, Angular/RxJS, performance, accessibility, security and frontend system design |
 | **Agentic AI** | LLM fundamentals, agents and tool use (Claude SDK), MCP, RAG with Qdrant, the citation pipeline, Temporal workflows, evals and AI system design (OptimaAI) |
 | **Backend** | Python/asyncio, FastAPI, PostgreSQL + async SQLAlchemy, Redis, API design, OAuth/JWT + hierarchical RBAC, distributed systems, system design, Kubernetes/GitOps, testing and leadership |
 
