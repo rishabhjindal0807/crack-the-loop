@@ -9,6 +9,7 @@ import LeetCode from './pages/LeetCode.jsx';
 import Classes from './pages/Classes.jsx';
 import ClassDetail from './pages/ClassDetail.jsx';
 import Interviews from './pages/Interviews.jsx';
+import InterviewPrep from './pages/InterviewPrep.jsx';
 import CommandSearch from './components/CommandSearch.jsx';
 import { Icon } from './components/ui.jsx';
 import { sections } from './data/sections.js';
@@ -186,6 +187,7 @@ export default function App() {
               <Route key={s.id} path={`/${s.id}/:catId?`} element={<QnaSection section={s} />} />
             ))}
             <Route path="/interviews" element={<Interviews />} />
+            <Route path="/interviews/:oppId" element={<InterviewPrep />} />
             <Route path="/revise" element={<Revise />} />
             <Route path="/starred" element={<Navigate to="/revise" replace />} />
             <Route path="*" element={<Today />} />

@@ -6,6 +6,7 @@ import { lcSubmissions } from '../data/leetcode.js';
 import { useProgress } from '../lib/progress.js';
 import { Badge, Card, ProgressBar, StatusPill, diffColor } from '../components/ui.jsx';
 import { reviseItems } from './Revise.jsx';
+import { allOpps, daysUntil, nextRound, prepTasks, whenLabel } from '../lib/opps.js';
 
 // Today answers one question: what should I do next?
 function nextStep(p) {
@@ -37,12 +38,34 @@ export default function Today() {
   const conceptIds = sections.flatMap((s) => s.categories.flatMap((c) => c.items.map((i) => `${s.id}:${i.id}`)));
   const allIds = [...dsaIds, ...conceptIds];
   const date = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  const soon = allOpps(p)
+    .map((o) => ({ o, r: nextRound(o) }))
+    .filter(({ r }) => r && r.date && daysUntil(r.date) >= 0 && daysUntil(r.date) <= 21)
+    .sort((a, b) => a.r.date.localeCompare(b.r.date));
 
   return (
     <div className="space-y-12">
       <section aria-labelledby="continue">
         <p className="text-sm text-slate-600 dark:text-slate-400">{date}</p>
         <h1 id="continue" className="sr-only">Today</h1>
+        {soon.map(({ o, r }) => {
+          const tasks = prepTasks(o);
+          const done = tasks.filter((k) => p.prepDone(k)).length;
+          return (
+            <Link key={o.id} to={`/interviews/${o.id}`} className="group mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-5 py-4 dark:border-indigo-500/30 dark:bg-indigo-500/10">
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-indigo-800 dark:text-indigo-300">Interview {daysUntil(r.date) === 0 ? 'today' : daysUntil(r.date) === 1 ? 'tomorrow' : `in ${daysUntil(r.date)} days`}</span>
+                <span className="block text-[17px] font-semibold text-slate-900 group-hover:text-indigo-800 dark:text-white">{o.company}, {r.name}</span>
+                <span className="block text-sm text-slate-700 dark:text-slate-300">{o.role} · {whenLabel(r.date, r.time)}</span>
+              </span>
+              <span className="w-full sm:w-56">
+                <span className="mb-1 block text-xs text-slate-700 dark:text-slate-300">Prep done</span>
+                <ProgressBar value={done} total={tasks.length} label={`${o.company} prep done`} />
+              </span>
+              <span className="text-sm font-medium text-indigo-800 dark:text-indigo-300">Open prep plan</span>
+            </Link>
+          );
+        })}
         {step ? (
           <div className="mt-3">
             <p className="text-sm font-medium text-slate-600 dark:text-slate-400">

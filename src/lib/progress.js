@@ -6,7 +6,10 @@ import { lcStatus } from '../data/leetcode.js';
 //   status     { [id]: 'todo' | 'solved' | 'revise' | 'mastered' }   ← the source of truth from now on
 //   touched    { [id]: timestamp }                                     ← last status change, for "recently revised"
 //   notes      { [id]: { text, at } }
-//   interviews [ { id, company, round, date, tech, question, notes, link, at } ]
+//   interviews [ { id, company, round, date, tech, question, notes, link, at } ]   ← questions you were asked
+//   prep       { ['<opportunity>:<task>']: timestamp }                            ← ticked prep-plan tasks
+//   opps       { [opportunityId]: { rounds: [...] } }                              ← your edits to round details
+//   oppsLocal  [ { id, company, role, location, source, jd, rounds, at } ]         ← interviews you added yourself
 //   done, star — the original v1 maps. Never rewritten or deleted; only read as a fallback,
 //                so nothing recorded before the status model is lost.
 const KEY = 'prep-progress-v1';
@@ -80,7 +83,7 @@ export const progressStore = {
     const parsed = JSON.parse(text);
     const data = parsed && parsed.app === 'crack-the-loop' ? parsed.data : parsed;
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('This file is not a Crack the Loop backup.');
-    const maps = ['done', 'star', 'status', 'touched', 'notes'];
+    const maps = ['done', 'star', 'status', 'touched', 'notes', 'prep', 'opps'];
     const next = { ...state };
     for (const m of maps) if (data[m] && typeof data[m] === 'object') next[m] = { ...(state[m] || {}), ...data[m] };
     if (Array.isArray(data.interviews)) {
@@ -88,11 +91,16 @@ export const progressStore = {
       for (const x of data.interviews) if (x && x.id) byId.set(x.id, x);
       next.interviews = [...byId.values()];
     }
+    if (Array.isArray(data.oppsLocal)) {
+      const byId = new Map((state.oppsLocal || []).map((x) => [x.id, x]));
+      for (const x of data.oppsLocal) if (x && x.id) byId.set(x.id, x);
+      next.oppsLocal = [...byId.values()];
+    }
     commit(next);
     const counts = {
       items: Object.keys(data.status || {}).length + Object.keys(data.done || {}).length,
       notes: Object.keys(data.notes || {}).length,
-      interviews: (data.interviews || []).length,
+      interviews: (data.interviews || []).length + (data.oppsLocal || []).length,
     };
     return counts;
   },
@@ -134,6 +142,29 @@ export function useProgress() {
     commit({ ...state, interviews: (state.interviews || []).filter((x) => x.id !== id) });
   }, []);
 
+  const togglePrep = useCallback((key) => {
+    const prep = { ...(state.prep || {}) };
+    if (prep[key]) delete prep[key];
+    else prep[key] = Date.now();
+    commit({ ...state, prep });
+  }, []);
+
+  const saveOppRounds = useCallback((id, rounds) => {
+    commit({ ...state, opps: { ...(state.opps || {}), [id]: { ...((state.opps || {})[id] || {}), rounds } } });
+  }, []);
+
+  const saveOppLocal = useCallback((o) => {
+    const list = [...(state.oppsLocal || [])];
+    const i = list.findIndex((x) => x.id === o.id);
+    if (i >= 0) list[i] = { ...o, at: Date.now() };
+    else list.unshift({ ...o, at: Date.now() });
+    commit({ ...state, oppsLocal: list });
+  }, []);
+
+  const removeOppLocal = useCallback((id) => {
+    commit({ ...state, oppsLocal: (state.oppsLocal || []).filter((x) => x.id !== id) });
+  }, []);
+
   const status = (id) => statusOf(state, id);
   return {
     status,
@@ -151,6 +182,13 @@ export function useProgress() {
     interviews: () => state.interviews || [],
     saveInterview,
     removeInterview,
+    prepDone: (key) => Boolean(state.prep?.[key]),
+    togglePrep,
+    oppRounds: (id) => state.opps?.[id]?.rounds,
+    saveOppRounds,
+    oppsLocal: () => state.oppsLocal || [],
+    saveOppLocal,
+    removeOppLocal,
     // kept so older call sites keep working
     isStarred: (id) => status(id) === 'revise',
     toggleStar: (id) => setStatus(id, status(id) === 'revise' ? 'solved' : 'revise'),

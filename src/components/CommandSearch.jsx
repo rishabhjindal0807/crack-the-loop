@@ -5,6 +5,7 @@ import { sections } from '../data/sections.js';
 import { allClasses } from '../data/classes.js';
 import { useProgress } from '../lib/progress.js';
 import { Icon, StatusPill } from './ui.jsx';
+import { allOpps } from '../lib/opps.js';
 
 // One search box for everything: problems, concept questions, classes and your interview log.
 const staticIndex = [
@@ -73,7 +74,15 @@ export default function CommandSearch({ open, onClose }) {
       hay: `${x.question} ${x.company} ${x.round} ${x.tech} ${x.notes}`.toLowerCase(),
       to: `/interviews?company=${encodeURIComponent(x.company || '')}`,
     }));
-    return [...interviews, ...staticIndex]
+    const processes = allOpps(p).map((o) => ({
+      kind: 'Interview',
+      id: `opp-${o.id}`,
+      title: `${o.company}: prep plan`,
+      sub: o.role || '',
+      hay: `${o.company} ${o.role || ''} ${o.location || ''} prep plan interview`.toLowerCase(),
+      to: `/interviews/${o.id}`,
+    }));
+    return [...processes, ...interviews, ...staticIndex]
       .map((it) => ({ it, s: score(it, words) }))
       .filter((r) => r.s >= 0)
       .sort((a, b) => b.s - a.s)

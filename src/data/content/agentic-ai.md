@@ -358,6 +358,108 @@ Per request: trace id, user/tenant, model + version, prompt template version, to
 ## How do you roll out a new model or prompt safely? [Deep dive]
 Offline evals on the golden set → shadow mode (run new version, don't show) and compare → canary to one lender/internal users behind a feature flag → monitor quality, cost, latency, error rates → gradual rollout with instant rollback (config, not code). Pin model versions; never let "latest" silently change behaviour in a regulated product.
 
+# Real-time voice agents {#voice}
+How a phone or app voice agent works: audio in, words understood, the agent decides, audio out, all in about a second. This is the part of a voice-AI role your resume doesn't show yet, so learn the moving parts and connect each one to what you already built.
+
+## Design a real-time voice AI agent end to end [Design]
+**Example to practise:** a Hindi voice agent that answers a hospital's phone line and books, moves or cancels appointments.
+
+**1. Clarify first (2 minutes).** Phone calls or an app? Which languages? How many calls at the same time? What can it do (book only, or also answer questions)? What must go to a human? Where does the hospital's data live?
+
+**2. The pipeline** (this is the "cascade" design most teams use):
+
+```text
+caller ⇄ phone network (SIP)  or  browser / app (WebRTC)
+      ⇄ telephony provider / media server
+      ⇄ voice gateway  (your service, one long-lived connection per call)
+           → VAD + turn detection   (is the caller speaking? have they finished?)
+           → streaming speech-to-text   (partial + final words)
+           → agent: LLM + tools + call state   (find_slot, book, cancel, transfer_to_human)
+           → streaming text-to-speech   (audio chunks)
+      ← audio back to the caller
+side systems: Redis (live call state) · Postgres (appointments, call logs)
+              queue / Temporal (after the call: summary, CRM update, SMS)
+              tracing + metrics for every stage
+```
+
+**3. Key decisions to talk through**
+- **Cascade vs speech-to-speech model.** A cascade (STT → LLM → TTS) gives you the transcript, tool calls and logs at every step, which matters in healthcare. Speech-to-speech models can be faster and sound more natural, but they're harder to control and audit. Say which you'd pick and why.
+- **Every call is stateful and long-lived.** Keep the session on one worker (sticky routing) and save checkpoints to Redis, so a crash doesn't lose the booking.
+- **Tools are normal backend APIs** with timeouts and idempotency keys. The agent reads back the details ("Tuesday 10 am with Dr Mehta, right?") before it books.
+- **Safety.** The agent gives no medical advice. Words like "chest pain" or "emergency" hand off to a human right away. Announce that the caller is talking to an AI, and that the call is recorded.
+- **Scale = live calls, not requests.** Each call holds a socket plus STT, LLM and TTS streams. Scale the gateway workers horizontally, and watch vendor rate limits and concurrency caps.
+- **After the call** run the slow work asynchronously: summary, CRM update, confirmation SMS. That's exactly the Temporal pattern you already run at OptimaAI.
+
+**4. Close with how you'd measure it:** latency per stage, task success rate, how often calls go to a human, and cost per call.
+
+## Where does the latency go in a voice call, and how do you cut it? [Deep dive]
+In a normal conversation people reply within a fraction of a second. A voice agent usually feels fine if it starts talking within about **1 second** of the caller stopping, and feels slow past roughly 1.5–2 seconds. These are rough targets; measure your own.
+
+**Where the time goes** (rough ranges, they vary a lot by vendor and region):
+
+| Stage | Typical time |
+|---|---|
+| Deciding the caller has finished (end-of-turn) | 200–500 ms |
+| Final words from streaming speech-to-text | 100–300 ms |
+| LLM first token | 200–600 ms |
+| Text-to-speech first audio | 100–300 ms |
+| Network + phone line | 100–200 ms |
+
+**How to cut it**
+- **Stream every stage.** Send audio to STT as it arrives, and start TTS on the **first sentence** of the LLM's answer instead of waiting for the whole reply.
+- **Use a fast model for the live turn.** Keep prompts short, use prompt caching, and move heavy reasoning (summaries, analysis) to after the call.
+- **Keep everything close.** Put the vendors' servers in the same region as your users (India), and keep persistent connections open so you don't pay a new handshake every turn.
+- **Hide slow tools.** Say a short filler ("Let me check that for you") while a slow lookup runs, or start likely lookups early.
+- **Measure p50 and p95 for each stage**, not one total number, so you know which stage to fix.
+
+## How do you handle interruptions (barge-in) and turn-taking? [Deep dive]
+- **Barge-in:** when voice activity detection (VAD) hears the caller while the agent is speaking:
+  1. stop playback immediately and flush the audio buffer;
+  2. cancel the in-flight LLM and TTS work;
+  3. save only the part of the reply that was actually played, so the agent doesn't "remember" saying things the caller never heard.
+- **End of turn:** silence alone is a bad signal. People pause to think, and Hindi speakers often use fillers like "haan", "matlab" or "woh". Combine VAD, a short silence window and a small end-of-turn model, and tune it per language.
+- **Backchannels:** "haan ji" or "hmm" while the agent talks usually means "go on", not "stop". Don't treat every sound as an interruption.
+- **Echo:** use echo cancellation, so the agent doesn't hear its own voice through the caller's speaker and interrupt itself.
+- **Test on real phone audio.** Phone lines are noisy and low quality (8 kHz), very different from a clean laptop mic.
+
+## WebSockets vs WebRTC vs phone lines (SIP): which and when? [Core]
+- **Phone calls (PSTN / SIP):** most hospital and bank calls in India are ordinary phone calls. A telephony provider (for example Exotel, Plivo or Twilio) connects the call and streams the audio to your server, often over a WebSocket as small 8 kHz chunks.
+- **WebRTC:** use it for voice inside a browser or mobile app. It's built for live media: it runs over UDP, handles jitter and does echo cancellation. With many calls you add a media server or SFU (for example LiveKit).
+- **WebSockets:** simple and fine for audio between your own services in one data centre. They run over TCP, so on a bad mobile network one lost packet delays everything behind it.
+
+**Rule of thumb:**
+- phone numbers → a telephony provider;
+- browser or app → WebRTC;
+- between your own services → WebSocket or gRPC streams.
+
+## How do you test and monitor a voice agent? [Core]
+**Before a release**
+- Build a test set of call scripts and recorded real calls, with the expected result for each (right slot, right patient name, right language). Include Hindi, English, Hinglish, accents and noisy lines.
+- Run **simulated callers**: an LLM plays the patient, TTS speaks for it, and your agent answers. Run hundreds of these after every prompt or model change, the same idea as your offline eval set at OptimaAI.
+- Score the transcripts: was the task done, were any facts wrong, did it follow the policy (no medical advice, correct handoff)?
+
+**In production**
+- **Latency** p50 and p95 for every stage, plus total time to first audio.
+- **Quality:**
+  - task success rate;
+  - human-handoff rate;
+  - hang-ups mid-call;
+  - STT error rate on a reviewed sample;
+  - tool error rate.
+- **Cost** per call and per minute.
+- **One call ID across every service** (tracing), so you can replay one bad call end to end.
+- **Alerts on SLOs** (for example, "p95 time to first audio above 1.5 s for 5 minutes").
+- **A weekly review** of sampled calls with someone from the hospital or bank.
+
+## How do you keep patient data safe in a voice AI product? [Core]
+- **Collect only what you need.** Tell callers they're talking to an AI and that the call is recorded, and get consent.
+- **Know the law.** India's **Digital Personal Data Protection (DPDP) Act, 2023** covers personal data. Health data needs extra care, and **HIPAA** applies if you serve US healthcare clients. Say you'd involve legal/compliance; don't pretend to be the expert.
+- **Encrypt** audio and data in transit and at rest. **Keep data in the required country.** You already ran separate India and UAE environments, which is the same idea.
+- **Redact** names, phone numbers and medical details from logs and from the transcripts you use for testing and evals.
+- **Control access:** role-based access (your lender → division → branch RBAC is the same skill), and an audit log of who listened to or read what.
+- **Check vendors:** confirm the STT, LLM and TTS providers don't train on your data, and that a data processing agreement is signed.
+- **Keep the AI in scope:** no diagnosis or medical advice, and a clear, fast path to a human.
+
 # AI system design {#ai-design}
 
 ## Design OptimaAI: an AI credit-underwriting platform [Design]
