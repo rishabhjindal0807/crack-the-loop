@@ -154,10 +154,27 @@ export default {
       difficulty: 'Medium',
       lc: 'remove-nth-node-from-end-of-list',
       tags: ['two-pointers', 'dummy-node'],
-      statement: 'Remove the n-th node from the end in one pass.',
+      statement: 'Given the `head` of a linked list, remove the n-th node from the end and return its head.\n\n**Example:** `1→2→3→4→5, n = 2` → `1→2→3→5`',
       approaches: [
         {
-          name: 'Gap of n between two pointers',
+          name: 'Two passes (count length)',
+          time: 'O(L) — two traversals',
+          space: 'O(1)',
+          idea: 'Count the length L, then the node to delete is the (L − n + 1)-th from the start — stop at the node before it.',
+          code: `
+            function removeNthFromEnd(head, n) {
+              let len = 0;
+              for (let p = head; p; p = p.next) len++;
+              const dummy = new ListNode(0, head);
+              let prev = dummy;
+              for (let i = 0; i < len - n; i++) prev = prev.next;
+              prev.next = prev.next.next;
+              return dummy.next;
+            }
+          `,
+        },
+        {
+          name: 'One pass: gap of n between two pointers',
           time: 'O(L)',
           space: 'O(1)',
           code: `
@@ -171,7 +188,39 @@ export default {
             }
           `,
         },
+        {
+          name: 'Your accepted solution (LeetCode)',
+          time: 'O(L) — one pass',
+          space: 'O(1)',
+          idea: `
+            Same one-pass idea, as you submitted it. Moving \`fast\` **n + 1** steps from the dummy leaves exactly n nodes between
+            \`slow\` and \`fast\`; when \`fast\` falls off the end, \`slow\` sits **just before** the node to delete. The dummy node
+            makes deleting the head (\`n = L\`) work without a special case.
+          `,
+          code: `
+            var removeNthFromEnd = function (head, n) {
+              let dummy = new ListNode(0);
+              dummy.next = head;
+              let slow = dummy;
+              let fast = dummy;
+              for (let i = 0; i <= n; i++) {
+                fast = fast.next;
+              }
+              while (fast != null) {
+                slow = slow.next;
+                fast = fast.next;
+              }
+              slow.next = slow.next.next;
+              return dummy.next;
+            };
+          `,
+        },
       ],
+      explanation: `
+        **Interview talking points:** why the dummy node (removing the head is otherwise a special case), why \`<= n\` (n + 1 moves so
+        \`slow\` stops one node *before* the target), and the follow-up “can you do it in one pass?” — which is exactly this gap trick.
+        The same two-pointer gap finds the k-th node from the end.
+      `,
       fn: 'removeNthFromEnd',
       input: list,
       output: toArr,
@@ -179,6 +228,7 @@ export default {
         { args: [[1, 2, 3, 4, 5], 2], expected: [1, 2, 3, 5] },
         { args: [[1], 1], expected: [] },
         { args: [[1, 2], 1], expected: [1] },
+        { args: [[1, 2, 3], 3], expected: [2, 3], label: 'remove the head' },
       ],
     },
     {

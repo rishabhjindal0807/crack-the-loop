@@ -1,7 +1,7 @@
 // Snapshot of Rishabh's LeetCode practice history (https://leetcode.com/u/rishabhjindal0807/).
 // To update: add a row when you solve something new (or flip a verdict to 'AC').
 // Site problems whose `lc` slug appears here get a LeetCode badge and count towards progress.
-export const lcSnapshotDate = '18 Nov 2026';
+export const lcSnapshotDate = '19 Nov 2026';
 export const lcProfile = 'https://leetcode.com/u/rishabhjindal0807/';
 
 // [number, slug, title, difficulty, verdict]   verdict: 'AC' | 'WA' | 'TLE'
@@ -11,6 +11,7 @@ const rows = [
   [9, 'palindrome-number', 'Palindrome Number', 'Easy', 'AC'],
   [11, 'container-with-most-water', 'Container With Most Water', 'Medium', 'AC'],
   [13, 'roman-to-integer', 'Roman to Integer', 'Easy', 'AC'],
+  [19, 'remove-nth-node-from-end-of-list', 'Remove Nth Node From End of List', 'Medium', 'AC'],
   [20, 'valid-parentheses', 'Valid Parentheses', 'Easy', 'AC'],
   [21, 'merge-two-sorted-lists', 'Merge Two Sorted Lists', 'Easy', 'AC'],
   [26, 'remove-duplicates-from-sorted-array', 'Remove Duplicates from Sorted Array', 'Easy', 'AC'],
