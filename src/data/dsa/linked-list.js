@@ -193,7 +193,7 @@ export default {
 - $b$ — steps from $S$ forward to the meeting point $M$, with $0 \\le b < L$ &nbsp;(here $b = 2$)
 - $t$ — loop iterations until slow and fast meet
 
-#### Step 1 — If there is a cycle, slow and fast must meet
+### Step 1 — If there is a cycle, slow and fast must meet
 
 After $a$ steps slow enters the cycle, and fast is already inside it. Let $g$ be how many nodes fast is *behind* slow, counted forward around the cycle, so $0 \\le g < L$.
 Every iteration fast moves 2 and slow moves 1, so the gap shrinks by exactly one:
@@ -203,13 +203,13 @@ $$g \\;\\to\\; g-1 \\;\\to\\; g-2 \\;\\to\\; \\cdots \\;\\to\\; 0$$
 Because it drops by 1 each time, fast can never jump over slow — they land on the same node within $g < L$ more steps.
 With no cycle, fast reaches \`null\` first and we return \`null\`.
 
-#### Step 2 — Slow has not finished a lap when they meet
+### Step 2 — Slow has not finished a lap when they meet
 
 Slow enters the cycle at step $a$ and they meet fewer than $L$ steps later, so slow is less than one lap past $S$:
 
 $$\\text{slow walked:}\\qquad t = a + b, \\qquad 0 \\le b < L$$
 
-#### Step 3 — Fast walked twice as far
+### Step 3 — Fast walked twice as far
 
 Fast stands on the same node $M$, so it walked the same path plus some whole number $k \\ge 1$ of extra laps:
 
@@ -221,14 +221,14 @@ $$2(a + b) = a + b + kL \\quad\\Longrightarrow\\quad a + b = kL$$
 
 $$\\boxed{\\;a = kL - b = (k-1)\\,L + (L - b)\\;}$$
 
-#### Step 4 — What the formula means
+### Step 4 — What the formula means
 
 $L - b$ is the distance from $M$ forward to $S$ (the orange arc). So a pointer that starts at $M$ and walks $a$ steps first covers $L - b$ steps to reach $S$, then $(k-1)$ full laps that bring it back to $S$.
 A pointer from head that walks the same $a$ steps also arrives at $S$ — so **ptr1 (from head) and ptr2 (from $M$), moving one step at a time, are both at $S$ after exactly $a$ steps.**
 
 They can't meet any earlier: until step $a$, ptr1 is still on the tail, while ptr2 never leaves the cycle.
 
-#### Check it on the example
+### Check it on the example
 
 | iteration $t$ | slow | fast |
 |:-:|:-:|:-:|
@@ -241,16 +241,16 @@ They can't meet any earlier: until step $a$, ptr1 is still on the tail, while pt
 They meet at $t = 4$. Slow walked $4 = a + b = 2 + 2$ ✓. Fast walked $8 = a + b + kL = 4 + k \\cdot 4$, so $k = 1$ ✓.
 Then $a = kL - b = 4 - 2 = 2$: ptr1 goes $1 \\to 2 \\to 3$ and ptr2 goes $5 \\to 6 \\to 3$ — both reach 3 in 2 steps ✓.
 
-#### Edge cases fall out of the same equation
+### Edge cases fall out of the same equation
 
 - **Cycle starts at head** ($a = 0$): $b = kL$ with $0 \\le b < L$ forces $b = 0$ — they meet at head, and \`ptr1 == ptr2\` straight away.
 - **Self-loop** ($L = 1$): again $b = 0$, so they meet on the node itself.
 
-#### Complexity
+### Complexity
 
 Phase 1 runs at most $a + g < a + L \\le n$ iterations, phase 2 exactly $a \\le n$, so time is $O(n)$ and extra space is $O(1)$.
 
-#### Why fast moves exactly 2
+### Why fast moves exactly 2
 
 With speeds 2 and 1 the gap closes by 1 per step, so it can't skip past 0. With speed 3 the gap closes by 2 — if $L$ is even and $g$ is odd, fast jumps over slow forever. Speed 2 is the choice that always works, and it is what gives $a = kL - b$.
 
@@ -571,7 +571,7 @@ With speeds 2 and 1 the gap closes by 1 per step, so it can't skip past 0. With 
         body: `
 Number the nodes by position $1, 2, \\dots, n$. Odd positions should come first, then even positions, each group in its original order.
 
-#### Loop invariant
+### Loop invariant
 
 At the start of round $i$ (counting from $i = 1$), with $o$ = **odd** and $e$ = **even**:
 
@@ -584,7 +584,7 @@ and $e.\\text{next}$ still points at node $2i+1$ — the untouched rest of the l
 - **It holds at the start** ($i = 1$): odd $= 1$, even $= 2$, and $2.\\text{next} = 3$.
 - **One round keeps it true:** \`odd.next = even.next\` links $2i-1 \\to 2i+1$; then \`even.next = odd.next\` links $2i \\to 2i+2$. Moving both pointers gives $o = 2(i+1)-1$ and $e = 2(i+1)$, and node $2i+2$'s next is still the original node $2i+3$.
 
-#### When the loop stops
+### When the loop stops
 
 The loop runs while $e \\ne \\text{null}$ and $e.\\text{next} \\ne \\text{null}$, i.e. while node $2i+1$ exists.
 
@@ -597,7 +597,7 @@ Either way **odd** is the last odd-position node and the even chain already ends
 
 $$\\underbrace{1 \\to 3 \\to \\cdots}_{\\text{odd positions}} \\;\\to\\; \\underbrace{2 \\to 4 \\to \\cdots \\to \\text{null}}_{\\text{even positions}} \\qquad (\\texttt{odd.next = evenHead})$$
 
-#### Complexity
+### Complexity
 
 Each round re-links two nodes and moves both pointers two positions on, so there are about $\\lfloor (n-1)/2 \\rfloor$ rounds — $O(n)$ time. Only the three pointers **odd**, **even** and **evenHead** are extra, so space is $O(1)$.
 `,
@@ -773,7 +773,7 @@ Index the nodes $L_0, L_1, \\dots, L_{n-1}$. The target order alternates front a
 
 $$T = L_0,\\; L_{n-1},\\; L_1,\\; L_{n-2},\\; L_2,\\; \\dots \\qquad\\text{i.e.}\\qquad T_{2i} = L_i,\\quad T_{2i+1} = L_{n-1-i}$$
 
-#### Phase 1 — where slow stops
+### Phase 1 — where slow stops
 
 Your loop runs while \`fast\` and \`fast.next\` exist. After $s$ rounds slow is at $L_s$ and fast at $L_{2s}$, so it stops at the first $s$ with $2s \\ge n-1$:
 
@@ -788,11 +788,11 @@ So the first half is $A = L_0 \\dots L_{\\lfloor n/2 \\rfloor}$ with $m = \\lflo
 
 In general $m - k = 2$ when $n$ is even and $1$ when $n$ is odd.
 
-#### Phase 2 — reversing
+### Phase 2 — reversing
 
 Reversing the second half gives $B$ with $b_j = L_{n-1-j}$ for $j = 0, \\dots, k-1$: the back of the list, read from the end. (Each node is re-pointed once — $O(k)$.)
 
-#### Phase 3 — the weave
+### Phase 3 — the weave
 
 Each round splices one node of $B$ after the current node of $A$, so after the loop (which stops when $B$ runs out) the list is
 
@@ -806,12 +806,12 @@ $$0 \\;\\le\\; m - k \\;\\le\\; 2$$
 
 Your split has $m - k \\in \\{1, 2\\}$ ✓ — so the result is always the target order.
 
-#### Why the other middle also works
+### Why the other middle also works
 
 The reference approach stops when \`fast.next.next\` is null, giving $s = \\lfloor (n-1)/2 \\rfloor$ and $m - k \\in \\{0, 1\\}$. Also inside $[0, 2]$, so it is correct too — the two versions just put the middle node in different halves.
 A split with $m - k = 3$ (or more) would leave a tail like $L_k, L_{k+1}, L_{k+2}$ in the wrong order.
 
-#### Complexity
+### Complexity
 
 Phase 1 takes $\\lfloor n/2 \\rfloor$ rounds, phase 2 $k$ rounds and phase 3 $k$ rounds — $O(n)$ time in total. Only a handful of pointers are used, so extra space is $O(1)$.
 `,
@@ -978,7 +978,7 @@ $$f(x).\\text{val} = x.\\text{val}, \\qquad f(x).\\text{next} = f(x.\\text{next}
 
 and every $f(x)$ must be a **new** node. Then any path of next / random pointers in the original has exactly the same shape in the copy.
 
-#### Approach 1 — hash map
+### Approach 1 — hash map
 
 **Pass 1** creates one new node per original and stores it: the map *is* $f$. It is one-to-one, because each original gets its own \`new _Node\`, so the copy has exactly $n$ nodes.
 
@@ -990,7 +990,7 @@ which are exactly the two conditions above. Every pointer we write is a value re
 
 Cost: $n$ map inserts plus $2n$ lookups, each $O(1)$ on average ⇒ $O(n)$ time; the map holds $n$ entries ⇒ $O(n)$ extra space.
 
-#### Approach 2 — interleaving (no map)
+### Approach 2 — interleaving (no map)
 
 After **pass 1** the list is $L_0, f(L_0), L_1, f(L_1), \\dots$ — position $2i$ holds $L_i$ and position $2i+1$ holds its copy. So for every original node:
 

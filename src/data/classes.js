@@ -154,7 +154,7 @@ export const units = [
   },
 ];
 
-// ---- link problems to classes by their 📒 `from` tag -------------------------------------
+// ---- link problems to classes by their `from` tag -------------------------------------
 // "Lec 13 + IL8 – …" belongs to both; "(+ IL7 homework 706)" adds a homework link to IL7.
 const codeToId = (c) => {
   const m = c.match(/^(?:Lec(?:ture)?\s*(\d+)|IL\s*(\d+))$/i);
@@ -189,7 +189,7 @@ export const classOfQuestion = (q) => (q.from ? parseFrom(q.from)[0]?.id : null)
 export const topicTitles = (c) => c.topics.map((t) => topicById[t]).filter(Boolean);
 
 export const kindMeta = {
-  class: { label: 'Solved in class', icon: '🧑‍🏫' },
-  homework: { label: 'Homework', icon: '📝' },
-  notes: { label: 'From the Bosscoder notes', icon: '📒' },
+  class: { label: 'Solved in class' },
+  homework: { label: 'Homework' },
+  notes: { label: 'From the Bosscoder notes' },
 };

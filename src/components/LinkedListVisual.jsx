@@ -141,7 +141,8 @@ export default function LinkedListVisual({ visual, uid }) {
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+      <p className="mb-2 text-xs text-slate-600 sm:hidden dark:text-slate-400">Swipe the diagram sideways to see the whole list.</p>
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950" tabIndex={0} aria-label="Diagram, scrollable">
         <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[560px]" role="img" aria-label={step.caption}>
           <defs>
             {[...new Set([GREY, ORANGE, PINK, MAPC, ...groups.map((g) => g.color)])].map((c) => (
@@ -203,7 +204,7 @@ export default function LinkedListVisual({ visual, uid }) {
       </div>
 
       {(groups.length > 0 || hasRandom || hasMap) && (
-        <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
+        <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
           {groups.map((g) => (
             <span key={g.label} className="flex items-center gap-1.5">
               <span className="inline-block h-0.5 w-5 rounded" style={{ background: g.color }} /> {g.label}
@@ -236,7 +237,7 @@ export default function LinkedListVisual({ visual, uid }) {
           <button aria-label="Next step" onClick={() => { setPlaying(false); setI((x) => Math.min(steps.length - 1, x + 1)); }} disabled={i === steps.length - 1}
             className="rounded-lg border border-slate-200 px-2.5 py-1 text-sm disabled:opacity-40 dark:border-slate-700">▶</button>
         </div>
-        <span className="text-xs tabular-nums text-slate-500">
+        <span className="text-xs tabular-nums text-slate-600 dark:text-slate-400">
           Step {i + 1} / {steps.length}
         </span>
         <div className="flex gap-1">
@@ -248,7 +249,7 @@ export default function LinkedListVisual({ visual, uid }) {
       </div>
 
       <div className="mt-3 rounded-lg bg-slate-100 px-4 py-3 text-sm dark:bg-slate-800/60" aria-live="polite">
-        {step.code && <code className="mb-1 block font-mono text-[13px] font-semibold text-orange-600 dark:text-orange-400">{step.code}</code>}
+        {step.code && <code className="mb-1 block font-mono text-[13px] font-semibold text-orange-700 dark:text-orange-300">{step.code}</code>}
         <span className="text-slate-700 dark:text-slate-300">{step.caption}</span>
       </div>
     </div>

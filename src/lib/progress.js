@@ -2,12 +2,32 @@ import { useEffect, useState, useCallback } from 'react';
 import { allQuestions } from '../data/dsa/index.js';
 import { lcStatus } from '../data/leetcode.js';
 
-// DSA problems already accepted on LeetCode start out as "done" (you can still untick them).
-const lcSolved = new Set(allQuestions.filter((q) => lcStatus(q.lc)?.verdict === 'AC').map((q) => q.uid));
-const doneValue = (st, id) => (st.done && id in st.done ? Boolean(st.done[id]) : lcSolved.has(id));
-
-// Progress (done / starred) lives in this browser's localStorage only.
+// Everything personal lives in this browser's localStorage under one key:
+//   status     { [id]: 'todo' | 'solved' | 'revise' | 'mastered' }   ← the source of truth from now on
+//   touched    { [id]: timestamp }                                     ← last status change, for "recently revised"
+//   notes      { [id]: { text, at } }
+//   interviews [ { id, company, round, date, tech, question, notes, link, at } ]
+//   done, star — the original v1 maps. Never rewritten or deleted; only read as a fallback,
+//                so nothing recorded before the status model is lost.
 const KEY = 'prep-progress-v1';
+
+export const STATUSES = [
+  { id: 'todo', label: 'To do' },
+  { id: 'solved', label: 'Solved' },
+  { id: 'revise', label: 'Revise' },
+  { id: 'mastered', label: 'Mastered' },
+];
+const VALID = new Set(STATUSES.map((s) => s.id));
+
+// DSA problems already accepted on LeetCode start out as "solved".
+const lcSolved = new Set(allQuestions.filter((q) => lcStatus(q.lc)?.verdict === 'AC').map((q) => q.uid));
+
+function legacyStatus(st, id) {
+  if (st.star?.[id]) return 'revise';
+  const done = st.done && id in st.done ? Boolean(st.done[id]) : lcSolved.has(id);
+  return done ? 'solved' : 'todo';
+}
+const statusOf = (st, id) => (VALID.has(st.status?.[id]) ? st.status[id] : legacyStatus(st, id));
 
 function read() {
   try {
@@ -17,16 +37,66 @@ function read() {
   }
 }
 
-function write(state) {
+let saveError = null;
+function write(next) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    /* storage unavailable — progress just won't persist */
+    localStorage.setItem(KEY, JSON.stringify(next));
+    saveError = null;
+  } catch (e) {
+    saveError = e; // private mode / storage full — the UI shows a warning
   }
 }
 
 const listeners = new Set();
 let state = read();
+const emit = () => listeners.forEach((l) => l());
+const commit = (next) => {
+  state = next;
+  write(state);
+  emit();
+};
+
+// keep several open tabs in sync
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === KEY) {
+      state = read();
+      emit();
+    }
+  });
+}
+
+export const progressStore = {
+  get: () => state,
+  statusOf: (id) => statusOf(state, id),
+  saveError: () => saveError,
+
+  export() {
+    return JSON.stringify({ app: 'crack-the-loop', version: 2, exportedAt: new Date().toISOString(), data: state }, null, 2);
+  },
+
+  // Merges a backup into what's here: imported values win per item, interviews are merged by id.
+  import(text) {
+    const parsed = JSON.parse(text);
+    const data = parsed && parsed.app === 'crack-the-loop' ? parsed.data : parsed;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('This file is not a Crack the Loop backup.');
+    const maps = ['done', 'star', 'status', 'touched', 'notes'];
+    const next = { ...state };
+    for (const m of maps) if (data[m] && typeof data[m] === 'object') next[m] = { ...(state[m] || {}), ...data[m] };
+    if (Array.isArray(data.interviews)) {
+      const byId = new Map((state.interviews || []).map((x) => [x.id, x]));
+      for (const x of data.interviews) if (x && x.id) byId.set(x.id, x);
+      next.interviews = [...byId.values()];
+    }
+    commit(next);
+    const counts = {
+      items: Object.keys(data.status || {}).length + Object.keys(data.done || {}).length,
+      notes: Object.keys(data.notes || {}).length,
+      interviews: (data.interviews || []).length,
+    };
+    return counts;
+  },
+};
 
 export function useProgress() {
   const [, force] = useState(0);
@@ -36,21 +106,53 @@ export function useProgress() {
     return () => listeners.delete(l);
   }, []);
 
-  const toggle = useCallback((kind, id) => {
-    const bucket = { ...(state[kind] || {}) };
-    if (kind === 'done') bucket[id] = doneValue(state, id) ? 0 : Date.now(); // explicit 0 = unticked
-    else if (bucket[id]) delete bucket[id];
-    else bucket[id] = Date.now();
-    state = { ...state, [kind]: bucket };
-    write(state);
-    listeners.forEach((l) => l());
+  const setStatus = useCallback((id, s) => {
+    commit({
+      ...state,
+      status: { ...(state.status || {}), [id]: s },
+      touched: { ...(state.touched || {}), [id]: Date.now() },
+    });
   }, []);
 
+  const setNote = useCallback((id, text) => {
+    const notes = { ...(state.notes || {}) };
+    if (text.trim()) notes[id] = { text, at: Date.now() };
+    else delete notes[id];
+    commit({ ...state, notes });
+  }, []);
+
+  const saveInterview = useCallback((entry) => {
+    const list = [...(state.interviews || [])];
+    const i = list.findIndex((x) => x.id === entry.id);
+    const item = { ...entry, at: Date.now() };
+    if (i >= 0) list[i] = item;
+    else list.unshift(item);
+    commit({ ...state, interviews: list });
+  }, []);
+
+  const removeInterview = useCallback((id) => {
+    commit({ ...state, interviews: (state.interviews || []).filter((x) => x.id !== id) });
+  }, []);
+
+  const status = (id) => statusOf(state, id);
   return {
-    isDone: (id) => doneValue(state, id),
-    isStarred: (id) => Boolean(state.star?.[id]),
-    toggleDone: (id) => toggle('done', id),
-    toggleStar: (id) => toggle('star', id),
-    doneCount: (ids) => ids.filter((id) => doneValue(state, id)).length,
+    status,
+    setStatus,
+    isDone: (id) => status(id) !== 'todo',
+    isRevise: (id) => status(id) === 'revise',
+    // list checkbox: todo ↔ solved (a Revise / Mastered item goes back to To do)
+    toggleDone: (id) => setStatus(id, status(id) === 'todo' ? 'solved' : 'todo'),
+    doneCount: (ids) => ids.filter((id) => status(id) !== 'todo').length,
+    countBy: (ids, s) => ids.filter((id) => status(id) === s).length,
+    touchedAt: (id) => state.touched?.[id] || 0,
+    note: (id) => state.notes?.[id]?.text || '',
+    notes: () => state.notes || {},
+    setNote,
+    interviews: () => state.interviews || [],
+    saveInterview,
+    removeInterview,
+    // kept so older call sites keep working
+    isStarred: (id) => status(id) === 'revise',
+    toggleStar: (id) => setStatus(id, status(id) === 'revise' ? 'solved' : 'revise'),
   };
 }

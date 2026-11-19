@@ -1,121 +1,165 @@
 import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
-import { topics, allQuestions } from '../data/dsa/index.js';
+import { allQuestions } from '../data/dsa/index.js';
 import { sections } from '../data/sections.js';
-import { profile, links } from '../data/profile.js';
-import { useProgress } from '../lib/progress.js';
-import { Card, ProgressBar, Badge, diffColor } from '../components/ui.jsx';
-import { dedent } from '../lib/Markdown.jsx';
+import { allClasses, classById, current } from '../data/classes.js';
 import { lcSubmissions } from '../data/leetcode.js';
-import { classById, current, allClasses } from '../data/classes.js';
+import { useProgress } from '../lib/progress.js';
+import { Badge, Card, ProgressBar, StatusPill, diffColor } from '../components/ui.jsx';
+import { reviseItems } from './Revise.jsx';
 
-export default function Home() {
+// Today answers one question: what should I do next?
+function nextStep(p) {
+  const start = allClasses.findIndex((c) => c.id === current);
+  // the current class first, then the classes after it, then anything earlier that was skipped
+  const order = [...allClasses.slice(start), ...allClasses.slice(0, start)];
+  for (const c of order) {
+    const q = c.problems.find((x) => !p.isDone(x.uid));
+    if (q) return { cls: c, q, isCurrent: c.id === current };
+  }
+  return null;
+}
+
+const ago = (t) => {
+  if (!t) return '';
+  const d = Math.floor((Date.now() - t) / 86400000);
+  return d <= 0 ? 'today' : d === 1 ? 'yesterday' : `${d} days ago`;
+};
+
+export default function Today() {
   const p = useProgress();
+  const step = nextStep(p);
+  const cur = classById[current];
+  const curIds = cur.problems.map((q) => q.uid);
+  const revise = reviseItems(p).sort((a, b) => p.touchedAt(a.id) - p.touchedAt(b.id));
+  const retries = lcSubmissions.filter((s) => s.verdict !== 'AC').length;
+  const interviews = p.interviews();
   const dsaIds = allQuestions.map((q) => q.uid);
-
-  const cards = [
-    {
-      to: '/dsa',
-      title: 'DSA',
-      icon: '🧮',
-      desc: `${topics.length} topics · ${allQuestions.length} problems with JavaScript solutions you can run`,
-      ids: dsaIds,
-    },
-    ...sections.map((s) => {
-      const ids = s.categories.flatMap((c) => c.items.map((i) => `${s.id}:${i.id}`));
-      return { to: `/${s.id}`, title: s.title, icon: s.icon, desc: s.tagline, ids };
-    }),
-  ];
-
-  // Next 3 DSA problems not yet done, in curriculum order
-  const next = useMemo(() => allQuestions.filter((q) => !p.isDone(q.uid)).slice(0, 3), [p]);
+  const conceptIds = sections.flatMap((s) => s.categories.flatMap((c) => c.items.map((i) => `${s.id}:${i.id}`)));
+  const allIds = [...dsaIds, ...conceptIds];
+  const date = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
-    <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-8 text-white shadow-lg sm:p-10">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
-        <p className="text-sm font-medium text-indigo-200">Interview preparation hub</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">{profile.name}</h1>
-        <p className="mt-1 text-indigo-100">{profile.title}</p>
-        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-indigo-100/90">{profile.summary}</p>
-        <div className="mt-6 flex flex-wrap gap-2 text-sm">
-          <a className="rounded-lg bg-white/15 px-3 py-1.5 hover:bg-white/25" href={links.leetcode} target="_blank" rel="noreferrer">LeetCode profile ↗</a>
-          <a className="rounded-lg bg-white/15 px-3 py-1.5 hover:bg-white/25" href={links.github} target="_blank" rel="noreferrer">GitHub ↗</a>
-          <a className="rounded-lg bg-white/15 px-3 py-1.5 hover:bg-white/25" href={links.bosscoder} target="_blank" rel="noreferrer">Bosscoder curriculum ↗</a>
-        </div>
-      </section>
-
-      <Link to="/classes" className="group block">
-        <Card className="flex flex-wrap items-center justify-between gap-4 border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 p-5 transition group-hover:shadow-md dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-violet-500/5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">📍 Bosscoder class you're on</p>
-            <p className="mt-1 text-lg font-semibold">
-              {classById[current].code} · {classById[current].title}
-              <span className="ml-2 text-sm font-normal text-slate-500">
-                {p.doneCount(classById[current].problems.map((q) => q.uid))}/{classById[current].problems.length} done
-              </span>
+    <div className="space-y-12">
+      <section aria-labelledby="continue">
+        <p className="text-sm text-slate-600 dark:text-slate-400">{date}</p>
+        <h1 id="continue" className="sr-only">Today</h1>
+        {step ? (
+          <div className="mt-3">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              {step.isCurrent ? 'Continue' : 'Up next'} with{' '}
+              <Link to={`/classes/${step.cls.id}`} className="text-slate-900 underline decoration-slate-300 underline-offset-4 hover:decoration-slate-900 dark:text-white dark:decoration-slate-600">
+                {step.cls.code}, {step.cls.title}
+              </Link>
             </p>
-          </div>
-          <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">All {allClasses.length} classes, class-wise →</span>
-        </Card>
-      </Link>
-
-      <Link to="/leetcode" className="group block">
-        <Card className="flex flex-wrap items-center justify-between gap-4 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-5 transition group-hover:shadow-md dark:border-orange-500/30 dark:from-orange-500/10 dark:to-amber-500/5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">My LeetCode</p>
-            <p className="mt-1 text-lg font-semibold">
-              {lcSubmissions.filter((s) => s.verdict === 'AC').length} solved
-              <span className="ml-2 text-sm font-normal text-slate-500">
-                {['Easy', 'Medium', 'Hard'].map((d) => `${lcSubmissions.filter((s) => s.verdict === 'AC' && s.difficulty === d).length} ${d}`).join(' · ')}
+            <Link to={`/dsa/${step.q.topicId}/${step.q.id}`} className="group mt-2 block max-w-3xl">
+              <span className="block text-[34px] font-semibold leading-[1.1] tracking-tight text-slate-900 group-hover:text-indigo-700 sm:text-[44px] dark:text-white dark:group-hover:text-indigo-300">
+                {step.q.title}
               </span>
-            </p>
-          </div>
-          <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
-            ↻ {lcSubmissions.filter((s) => s.verdict !== 'AC').length} to retry · View dashboard →
-          </span>
-        </Card>
-      </Link>
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((c) => (
-          <Link key={c.to} to={c.to} className="group">
-            <Card className="h-full p-5 transition group-hover:-translate-y-0.5 group-hover:border-indigo-300 group-hover:shadow-md dark:group-hover:border-indigo-500/50">
-              <div className="text-2xl">{c.icon}</div>
-              <h2 className="mt-3 font-semibold">{c.title}</h2>
-              <p className="mt-1 min-h-10 text-sm text-slate-500 dark:text-slate-400">{c.desc}</p>
-              <div className="mt-4">
-                <ProgressBar value={p.doneCount(c.ids)} total={c.ids.length} />
+            </Link>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link to={`/dsa/${step.q.topicId}/${step.q.id}`} className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700">
+                Open problem
+              </Link>
+              <Badge className={diffColor[step.q.difficulty]}>{step.q.difficulty}</Badge>
+              <span className="text-sm text-slate-600 dark:text-slate-400">{step.q.topicTitle}</span>
+            </div>
+            {step.isCurrent && (
+              <div className="mt-6 max-w-sm">
+                <ProgressBar value={p.doneCount(curIds)} total={curIds.length} label={`${cur.code} progress`} />
               </div>
-            </Card>
-          </Link>
-        ))}
+            )}
+          </div>
+        ) : (
+          <div className="mt-3">
+            <p className="text-[34px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">Every class problem is done.</p>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">Spend today on your revise list, or pick a topic in Practice.</p>
+          </div>
+        )}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-5">
-        <Card className="p-6 lg:col-span-3">
-          <h2 className="font-semibold">“Tell me about yourself” — 60-second pitch</h2>
-          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {dedent(profile.pitch).replace(/\n(?!\n)/g, ' ')}
-          </p>
-        </Card>
-        <Card className="p-6 lg:col-span-2">
-          <h2 className="font-semibold">Up next in DSA</h2>
-          <ul className="mt-3 space-y-2">
-            {next.map((q) => (
-              <li key={q.uid}>
-                <Link to={`/dsa/${q.topicId}/${q.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:border-indigo-300 dark:border-slate-800">
-                  <span>
-                    <span className="block font-medium">{q.title}</span>
-                    <span className="text-xs text-slate-500">{q.topicTitle}</span>
-                  </span>
-                  <Badge className={diffColor[q.difficulty]}>{q.difficulty}</Badge>
-                </Link>
-              </li>
-            ))}
-            {next.length === 0 && <li className="text-sm text-slate-500">All done — time for revision ★</li>}
-          </ul>
-        </Card>
+      <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+        <section aria-labelledby="revise-h">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 id="revise-h" className="text-lg font-semibold text-slate-900 dark:text-white">Revise</h2>
+            <Link to="/revise" className="text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">
+              {revise.length ? `All ${revise.length}` : 'Open revise list'}
+            </Link>
+          </div>
+          {revise.length ? (
+            <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+              {revise.slice(0, 5).map((r) => (
+                <li key={r.id}>
+                  <Link to={r.to} className="flex items-center gap-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">{r.title}</span>
+                      <span className="block truncate text-xs text-slate-600 dark:text-slate-400">
+                        {r.area}
+                        {p.note(r.id) ? ' · has notes' : ''}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">{ago(p.touchedAt(r.id))}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="border-y border-slate-200 py-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
+              Nothing to revise yet. When a problem or concept feels shaky, set it to <StatusPill status="revise" /> and it shows up here.
+            </p>
+          )}
+          {retries > 0 && (
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+              Plus {retries} LeetCode submissions to retry.{' '}
+              <Link to="/revise#retry" className="font-medium text-indigo-700 hover:underline dark:text-indigo-300">See them</Link>
+            </p>
+          )}
+        </section>
+
+        <section aria-labelledby="int-h">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 id="int-h" className="text-lg font-semibold text-slate-900 dark:text-white">Interviews</h2>
+            <Link to="/interviews?new=1" className="text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">Log a question</Link>
+          </div>
+          {interviews.length ? (
+            <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+              {interviews.slice(0, 4).map((x) => (
+                <li key={x.id} className="py-3">
+                  <Link to={`/interviews?company=${encodeURIComponent(x.company || '')}`} className="block hover:text-indigo-700 dark:hover:text-indigo-300">
+                    <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">{x.question}</span>
+                    <span className="block text-xs text-slate-600 dark:text-slate-400">{[x.company, x.round, x.date && new Date(x.date + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })].filter(Boolean).join(' · ')}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Card className="p-4 text-sm text-slate-600 dark:text-slate-400">
+              Write down every question right after an interview, while you still remember it. Over time this becomes your most accurate study guide.
+              <Link to="/interviews?new=1" className="mt-3 block font-medium text-indigo-700 hover:underline dark:text-indigo-300">Log your first question</Link>
+            </Card>
+          )}
+        </section>
+      </div>
+
+      <section aria-labelledby="prog-h">
+        <h2 id="prog-h" className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Progress</h2>
+        <ul className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {[
+            ['Problems practised', p.doneCount(dsaIds), dsaIds.length, '/classes'],
+            ['Concepts covered', p.doneCount(conceptIds), conceptIds.length, '/ui'],
+            ['Mastered', p.countBy(allIds, 'mastered'), null, '/revise'],
+            ['To revise', revise.length, null, '/revise'],
+          ].map(([label, n, total, to]) => (
+            <li key={label}>
+              <Link to={to} className="group block">
+                <span className="block text-sm text-slate-600 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-white">{label}</span>
+                <span className="mt-1 block text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">
+                  {n}
+                  {total && <span className="text-base font-normal text-slate-600 dark:text-slate-400"> / {total}</span>}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );

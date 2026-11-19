@@ -4,16 +4,24 @@
 
 Rishabh's interview-preparation hub.
 
-A personal interview-preparation site with four tracks:
+A personal interview-preparation and knowledge system: **capture → organize → learn → practice → revise**.
 
-| Track | What's inside |
+| Section | What it's for |
 |---|---|
-| **DSA** | 191 problems in 18 topics, following Bosscoder Module 1 in class order (Lectures 1–20 + IL1–IL8 — every class and homework problem, tagged 📒 with its lecture), plus strings and graphs. Brute-force → optimal **JavaScript** solutions, complexity, explanation, and a **Run tests** button that executes the code in your browser. |
-| **UI / Frontend** | Walmart SDE-3 loop questions, JavaScript, machine-coding polyfills, React 18, TypeScript, Angular/RxJS, performance, accessibility, security and frontend system design |
-| **Agentic AI** | LLM fundamentals, agents and tool use (Claude SDK), MCP, RAG with Qdrant, the citation pipeline, Temporal workflows, evals and AI system design (OptimaAI) |
-| **Backend** | Python/asyncio, FastAPI, PostgreSQL + async SQLAlchemy, Redis, API design, OAuth/JWT + hierarchical RBAC, distributed systems, system design, Kubernetes/GitOps, testing and leadership |
+| **Today** (`/`) | What to do next: the next unsolved problem in your current class, your revise queue and recent interview questions. |
+| **Practice** (`/classes`, `/dsa`, `/leetcode`) | 215 DSA problems with runnable JavaScript solutions, step-through diagrams and proofs. Browse them by Bosscoder class, by topic, or through your LeetCode history. |
+| **Concepts** (`/ui`, `/ai`, `/backend`) | Interview Q&A for frontend, agentic AI and backend, mapped to the resume. |
+| **Interviews** (`/interviews`) | Log every question you're asked, grouped by company → round, and link each to the matching problem or concept. |
+| **Revise** (`/revise`) | Everything marked Revise, all your notes, LeetCode retries and your weakest topics. |
 
-You can mark items done or ★ star them for a revision list. Progress is saved in your browser's localStorage.
+Press **⌘K / Ctrl K** (or `/`) to search everything.
+
+**Your data:**
+- Every problem and question has one status (To do · Solved · Revise · Mastered) and a notes box.
+- Status, notes and the interview log are saved in this browser's `localStorage` (`prep-progress-v1`). Use **Export backup / Import backup** in the footer to keep a copy or move to another device.
+- To make interview questions permanent and visible on every device, put them in `src/data/interviews.js`.
+
+The product audit behind this structure is in [`docs/PRODUCT_AUDIT.md`](docs/PRODUCT_AUDIT.md).
 
 ## Run locally
 

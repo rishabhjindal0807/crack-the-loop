@@ -260,7 +260,7 @@ Also defeated by:
 Use a custom comparator `React.memo(Comp, areEqual)` sparingly. The React Compiler now auto-memoises most of this at build time, but interviewers still expect you to explain the mechanism.
 
 ## history.pushState vs hash routing — how does client-side routing work? [Core]
-| | Hash routing (`/#/cart`) | History API (`/cart`) |
+| Aspect | Hash routing (`/#/cart`) | History API (`/cart`) |
 |---|---|---|
 | How | Change `location.hash`; listen to `hashchange` | `history.pushState(state, '', '/cart')`; listen to `popstate` |
 | Server | The fragment never reaches the server, so any static host works | The server must return `index.html` for every route, or refresh gives a 404 |
