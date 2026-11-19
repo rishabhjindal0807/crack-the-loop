@@ -6,6 +6,7 @@
 // or { title, url } for outside pages.
 
 const V = 'ai:voice-';
+const PY = 'backend:python-from-js-';
 
 export const opportunities = [
   {
@@ -53,7 +54,7 @@ export const opportunities = [
     match: [
       { need: 'Lead and still hands-on', proof: 'You lead a team of 6 on OptimaAI and own the architecture, and you built core parts yourself: 5 MCP servers, Temporal workflows.' },
       { need: 'AI agents in production', proof: 'OptimaAI: an agentic credit-underwriting platform on Claude + MCP + Temporal, live with 10 lenders in India and MENA.' },
-      { need: 'Strong Python backend', proof: 'Python 3.13 / FastAPI monorepo with an async data layer: PostgreSQL + SQLAlchemy 2.0 + asyncpg, Redis, Qdrant.' },
+      { need: 'Python backend', proof: 'Your platform runs on Python 3.13 / FastAPI with an async data layer (PostgreSQL + SQLAlchemy 2.0 + asyncpg, Redis, Qdrant), and you own its architecture. Careful: you are still learning to write Python yourself, so talk about design and decisions and don\'t claim hands-on depth. See "Python, hands-on" under Gaps.' },
       { need: 'Architecture and trade-offs', proof: 'You chose MCP (one tool interface, so new tools plug in without changing agent code) and Temporal (durable state, automatic retries, 100+ concurrent workflows).' },
       { need: 'Reliable and fast in production', proof: 'Weekly releases at 99.9%+ uptime with Docker, Kubernetes + Helm and ArgoCD GitOps; Pytest unit / integration / e2e standards you set.' },
       { need: 'Correctness and trust in AI output', proof: 'Citation pipeline: every AI answer links to its source. AI edits have per-turn versioning, audit history and rollback.' },
@@ -65,6 +66,12 @@ export const opportunities = [
 
     // What the JD wants that your resume doesn't show yet
     gaps: [
+      {
+        gap: 'Python, hands-on',
+        why: 'The job says "strong backend, ideally Python", and your resume lists Python 3.13 / FastAPI. They will ask about it, and may ask you to write some.',
+        how: 'Learn Python by mapping it to the JavaScript you already know: basics, lists and dicts, async, then a small FastAPI service. Four days is enough to read, discuss and write simple Python, so be honest that you are still getting faster at writing it. Practise the honest answer below until it sounds natural.',
+        links: [`${PY}python-vs-javascript-the-basics-side-by-side`, `${PY}async-await-in-python-vs-javascript`, `${PY}write-a-small-fastapi-service-rest-websocket`, `${PY}how-strong-is-your-python-how-do-you-answer-honestly`],
+      },
       {
         gap: 'Real-time voice (the core of this job)',
         why: 'Your resume shows text and chat agents, not live voice calls.',
@@ -100,47 +107,83 @@ export const opportunities = [
     // Day-by-day plan until the interview
     plan: [
       {
-        day: 'Thursday, 19 Nov (tonight, 30 minutes)',
-        items: [
-          { id: 'recruiter', text: 'Message Ariba Khan: ask the round time, length, format (video, phone or in person), who the interviewer is, and whether there is coding. Also ask if the first screen is with Rumi, their AI interviewer.' },
-          { id: 'read-page', text: 'Read this page once: the company, what they want, and your gaps.' },
-        ],
-      },
-      {
         day: 'Friday, 20 Nov',
         items: [
-          { id: 'intro', text: 'Write your 90-second intro for this role (see "Tell me about yourself" below). Say it out loud 3 times.', links: [] },
-          { id: 'stories', text: 'Prepare 3 short stories from OptimaAI: a big technical decision, a production problem you fixed, and someone you mentored.', links: ['backend:leadership-tell-me-about-a-hard-technical-decision-you-made-and-its-trade-offs', 'backend:leadership-how-do-you-handle-a-production-incident', 'backend:leadership-how-do-you-mentor-engineers-and-grow-the-team'] },
+          { id: 'recruiter', text: 'Message Ariba Khan: ask the round time, length, format (video, phone or in person), who the interviewer is, and whether there is coding (and in which language). Also ask if the first screen is with Rumi, their AI interviewer.' },
+          { id: 'read-page', text: 'Read this page once: the company, what they want, and your gaps.' },
+          { id: 'py-basics', text: 'Python basics, mapped to JavaScript (about 1.5 hours). Type the examples yourself.', links: [`${PY}python-vs-javascript-the-basics-side-by-side`, `${PY}lists-dicts-sets-and-comprehensions`, `${PY}functions-arguments-and-type-hints`] },
+          { id: 'intro', text: 'Write your 90-second intro for this role (see "Tell me about yourself" below). Say it out loud 3 times.' },
           { id: 'voice-basics', text: 'Learn the voice pipeline, latency and barge-in.', links: [`${V}design-a-real-time-voice-ai-agent-end-to-end`, `${V}where-does-the-latency-go-in-a-voice-call-and-how-do-you-cut-it`, `${V}how-do-you-handle-interruptions-barge-in-and-turn-taking`] },
         ],
       },
       {
         day: 'Saturday, 21 Nov',
         items: [
-          { id: 'mock-design', text: 'Practise one system design out loud for 45 minutes: "Design a Hindi voice agent that books hospital appointments." Draw it on paper first.', links: [`${V}design-a-real-time-voice-ai-agent-end-to-end`] },
-          { id: 'optima-arch', text: 'Draw the OptimaAI architecture from memory in 5 minutes, and say one trade-off for each box.', links: ['ai:ai-design-design-optimaai-an-ai-credit-underwriting-platform'] },
-          { id: 'python', text: 'Revise async Python and scaling FastAPI: the event loop, blocking calls, workers.', links: ['backend:python-how-does-asyncio-work-when-is-async-actually-faster', 'backend:python-what-happens-if-you-call-blocking-code-inside-an-async-endpoint', 'backend:fastapi-background-tasks-vs-celery-vs-temporal-when-to-use-which'] },
-          { id: 'reliability', text: 'Revise reliability: timeouts, retries, circuit breakers, SLOs, testing and monitoring a voice agent.', links: ['backend:distributed-resilience-patterns-timeouts-retries-circuit-breakers-bulkheads', `${V}how-do-you-test-and-monitor-a-voice-agent`] },
+          { id: 'py-classes-async', text: 'Python classes, errors, and async/await. Compare each with JavaScript.', links: [`${PY}classes-dataclasses-and-pydantic-models`, `${PY}errors-and-with-context-managers`, `${PY}async-await-in-python-vs-javascript`] },
+          { id: 'py-fastapi', text: 'Install Python and run the small FastAPI service on your laptop. Change it: add a GET /bookings endpoint. Then write its test with pytest.', links: [`${PY}write-a-small-fastapi-service-rest-websocket`, `${PY}python-tooling-environments-packages-tests`] },
+          { id: 'mock-design', text: 'Practise one system design out loud for 45 minutes: "Design a Hindi voice agent that books hospital appointments." Draw it on paper first.', links: [`${V}design-a-real-time-voice-ai-agent-end-to-end`, `${V}websockets-vs-webrtc-vs-phone-lines-sip-which-and-when`] },
+          { id: 'optima-arch', text: 'Draw the OptimaAI architecture from memory in 5 minutes, and say one trade-off for each box.', links: ['ai:ai-design-design-optimaai-an-ai-credit-underwriting-platform', 'ai:mcp-what-is-mcp-and-why-did-you-choose-it', 'ai:temporal-why-temporal-for-agent-and-taskbook-orchestration'] },
         ],
       },
       {
         day: 'Sunday, 22 Nov',
         items: [
-          { id: 'founder', text: 'Read 2 articles about Iksha Labs / Hitesh Ganjoo (Sources, below) and note 2 things you genuinely like about their work.' },
-          { id: 'money', text: 'Write down your answers for current CTC, expected CTC (a range), notice period and earliest joining date.' },
-          { id: 'office', text: 'Decide your answer on working from their Gurugram office (and relocating, if you need to).' },
-          { id: 'ask-list', text: 'Pick 4–5 questions to ask them from the list below.' },
+          { id: 'py-gotchas', text: 'Python gotchas, plus practising your honest answer to "How strong is your Python?" out loud.', links: [`${PY}python-gotchas-interviewers-like-to-ask`, `${PY}how-strong-is-your-python-how-do-you-answer-honestly`] },
+          { id: 'stories', text: 'Prepare 3 short stories from OptimaAI: a big technical decision, a production problem you fixed, and someone you mentored.', links: ['backend:leadership-tell-me-about-a-hard-technical-decision-you-made-and-its-trade-offs', 'backend:leadership-how-do-you-handle-a-production-incident', 'backend:leadership-how-do-you-mentor-engineers-and-grow-the-team'] },
+          { id: 'reliability', text: 'Reliability and AI quality: testing and monitoring a voice agent, keeping AI answers correct.', links: [`${V}how-do-you-test-and-monitor-a-voice-agent`, 'ai:evals-how-do-you-evaluate-an-agentic-system', 'backend:distributed-observability-logs-metrics-traces-slos'] },
           { id: 'patient-data', text: 'Read how to keep patient data safe.', links: [`${V}how-do-you-keep-patient-data-safe-in-a-voice-ai-product`] },
-          { id: 'dsa-warmup', text: 'Light coding warm-up in case there is a coding part: 2 problems you have already solved.', links: ['linked-list/lru-cache', 'linked-list/copy-list-random-pointer'] },
+          { id: 'founder', text: 'Read 2 articles about Iksha Labs / Hitesh Ganjoo (Sources, below) and note 2 things you genuinely like about their work.' },
+          { id: 'money', text: 'Write down your answers for current CTC, expected CTC (a range), notice period, earliest joining date and working from the Gurugram office.' },
+          { id: 'ask-list', text: 'Pick 4–5 questions to ask them from the list below.' },
         ],
       },
       {
         day: 'Monday, 23 Nov (interview day)',
         items: [
+          { id: 'morning', text: 'Morning: read your intro, your 3 stories and the Python honest answer once. Don\'t learn anything new today.' },
           { id: 'tech-check', text: '30 minutes before: test your camera, mic and internet, plug in the charger, sit in a quiet room, keep water nearby.' },
           { id: 'open-tabs', text: 'Keep open: this page, your resume, the job description and a notepad for drawing.' },
-          { id: 'log', text: 'Right after: log every question you were asked (button on this page), write how it went, and send a short thank-you message.' },
+          { id: 'log', text: 'Right after: log every question you were asked (Rounds → Log a question), write how it went, and send a short thank-you message.' },
         ],
+      },
+    ],
+
+    // Everything to study for this interview, shown in full on the prep page
+    study: [
+      {
+        title: 'Real-time voice agents',
+        why: 'The core of this job. Your resume shows text agents; this is the step up.',
+        items: [`${V}design-a-real-time-voice-ai-agent-end-to-end`, `${V}where-does-the-latency-go-in-a-voice-call-and-how-do-you-cut-it`, `${V}how-do-you-handle-interruptions-barge-in-and-turn-taking`, `${V}websockets-vs-webrtc-vs-phone-lines-sip-which-and-when`, `${V}how-do-you-test-and-monitor-a-voice-agent`, `${V}how-do-you-keep-patient-data-safe-in-a-voice-ai-product`],
+      },
+      {
+        title: 'Python, from JavaScript',
+        why: 'The job wants a Python backend, and your resume lists Python. Learn it by mapping to JS.',
+        items: [`${PY}python-vs-javascript-the-basics-side-by-side`, `${PY}lists-dicts-sets-and-comprehensions`, `${PY}functions-arguments-and-type-hints`, `${PY}classes-dataclasses-and-pydantic-models`, `${PY}errors-and-with-context-managers`, `${PY}async-await-in-python-vs-javascript`, `${PY}write-a-small-fastapi-service-rest-websocket`, `${PY}python-tooling-environments-packages-tests`, `${PY}python-gotchas-interviewers-like-to-ask`, `${PY}how-strong-is-your-python-how-do-you-answer-honestly`],
+      },
+      {
+        title: 'Your work: OptimaAI',
+        why: 'They will go deep on your own project. Know every box and every choice.',
+        items: ['ai:ai-design-design-optimaai-an-ai-credit-underwriting-platform', 'ai:mcp-what-is-mcp-and-why-did-you-choose-it', 'ai:temporal-why-temporal-for-agent-and-taskbook-orchestration', 'ai:citations-design-the-end-to-end-citation-pipeline-you-built'],
+      },
+      {
+        title: 'Backend design and scaling',
+        why: 'The design ideas behind a fast, reliable backend. These matter more than the language.',
+        items: ['backend:python-how-does-asyncio-work-when-is-async-actually-faster', 'backend:python-what-happens-if-you-call-blocking-code-inside-an-async-endpoint', 'backend:python-the-gil-threads-vs-processes-vs-asyncio', 'backend:fastapi-background-tasks-vs-celery-vs-temporal-when-to-use-which', 'backend:fastapi-how-do-you-stream-responses-sse-from-fastapi', 'backend:distributed-resilience-patterns-timeouts-retries-circuit-breakers-bulkheads'],
+      },
+      {
+        title: 'Reliable AI in production',
+        why: 'The job stresses monitoring, testing and evals: catching problems before clients notice.',
+        items: ['backend:distributed-observability-logs-metrics-traces-slos', 'ai:evals-how-do-you-evaluate-an-agentic-system', 'ai:evals-what-do-you-log-trace-for-llm-features', 'ai:evals-how-do-you-roll-out-a-new-model-or-prompt-safely', 'ai:llm-why-do-llms-hallucinate-and-how-do-you-reduce-it', 'backend:system-design-design-an-audit-log-system-for-a-regulated-lending-platform'],
+      },
+      {
+        title: 'Leading the team',
+        why: 'It is a lead role: standards, mentoring, incidents, working with the founder.',
+        items: ['backend:leadership-tell-me-about-a-hard-technical-decision-you-made-and-its-trade-offs', 'backend:leadership-how-do-you-handle-a-production-incident', 'backend:leadership-how-do-you-mentor-engineers-and-grow-the-team', 'backend:leadership-how-do-you-run-code-and-design-reviews-for-a-team-of-6', 'backend:testing-what-testing-standards-did-you-set-for-the-team', 'backend:leadership-how-do-you-plan-estimate-and-deliver-with-product-credit-and-ops-stake'],
+      },
+      {
+        title: 'Coding warm-up (JavaScript)',
+        why: 'In case there is a short coding part. Open these to run the code.',
+        items: ['linked-list/lru-cache', 'linked-list/copy-list-random-pointer'],
       },
     ],
 
@@ -154,6 +197,11 @@ export const opportunities = [
       {
         q: 'Why Iksha Labs? Why change now?',
         a: 'Be positive. Never criticise your current company. "I\'ve built text agents for a regulated industry, and voice is the next step for agents. Iksha is already live with voice in hospitals and banks, and this role owns the whole system, working directly with the founder." Mention one specific thing you read about them.',
+      },
+      {
+        q: 'How strong is your Python?',
+        a: 'Be honest and precise. "Our backend is Python and FastAPI. I designed the services, the async data layer and the workflows, and I review that code. My own day-to-day coding has been stronger in TypeScript, so in Python I\'m comfortable reading, reviewing and discussing design, and I\'m getting faster at writing it." Then show it: explain async vs blocking code, and offer to write a small FastAPI endpoint.',
+        links: [`${PY}how-strong-is-your-python-how-do-you-answer-honestly`, `${PY}write-a-small-fastapi-service-rest-websocket`],
       },
       {
         q: 'Walk me through the architecture of OptimaAI.',
@@ -177,8 +225,8 @@ export const opportunities = [
       },
       {
         q: 'How do you scale a Python backend for many live calls?',
-        a: 'Async FastAPI. Never block the event loop; push CPU-heavy work to other workers. Scale stateless workers horizontally on Kubernetes, use sticky sessions plus Redis for call state, connection pools and backpressure, and respect vendor rate limits.',
-        links: ['backend:python-what-happens-if-you-call-blocking-code-inside-an-async-endpoint', 'backend:python-the-gil-threads-vs-processes-vs-asyncio'],
+        a: 'Answer with the design ideas; they are the same as in Node. Async FastAPI. Never block the event loop; push CPU-heavy work to other workers. Scale stateless workers horizontally on Kubernetes, use sticky sessions plus Redis for call state, connection pools and backpressure, and respect vendor rate limits.',
+        links: [`${PY}async-await-in-python-vs-javascript`, 'backend:python-what-happens-if-you-call-blocking-code-inside-an-async-endpoint', 'backend:python-the-gil-threads-vs-processes-vs-asyncio'],
       },
       {
         q: 'How do you monitor it in production?',
@@ -224,6 +272,7 @@ export const opportunities = [
       'Current CTC, expected CTC (a range you are happy with) and the reason for your number.',
       'Notice period, earliest joining date, and whether you can buy out or shorten your notice.',
       'Your answer on working from their Gurugram office, and relocating if needed. Public listings say they work on-site.',
+      'Your honest answer about Python: what you designed and review, and that you are getting faster at writing it.',
       'One positive sentence on why you are looking for a change.',
       'Every number on your resume you can back up: 10 lenders, 30+ tools, 100+ workflows, 99.9%+ uptime, a team of 6, +25% interaction, +10% conversion.',
       'Your resume open in front of you, the same version you sent.',

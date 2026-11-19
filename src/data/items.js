@@ -11,3 +11,8 @@ export const everything = [
   ),
 ];
 export const itemById = new Map(everything.map((x) => [x.id, x]));
+
+// Full concept questions (question + answer) by id, for showing them inline on other pages.
+export const conceptById = new Map(
+  sections.flatMap((s) => s.categories.flatMap((c) => c.items.map((i) => [`${s.id}:${i.id}`, { item: i, area: `${s.title} · ${c.title}` }])))
+);

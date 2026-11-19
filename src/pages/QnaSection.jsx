@@ -7,7 +7,12 @@ import { NotesBox, PageHeader, ProgressBar, SectionTabs, StatusButton, StatusCon
 
 const areaLabel = { ui: 'Frontend', ai: 'Agentic AI', backend: 'Backend' };
 
-export function QnaItem({ item, uid, defaultOpen = false, context }) {
+// `code` in a question title shows as code
+const withCode = (t) => t.split(/(`[^`]+`)/).map((part, i) =>
+  part.startsWith('`') ? <code key={i} className="rounded bg-slate-100 px-1 font-mono text-[0.9em] dark:bg-slate-800">{part.slice(1, -1)}</code> : part
+);
+
+export function QnaItem({ item, uid, defaultOpen = false, context, focusKey }) {
   const [open, setOpen] = useState(defaultOpen);
   const ref = useRef(null);
   const p = useProgress();
@@ -17,16 +22,16 @@ export function QnaItem({ item, uid, defaultOpen = false, context }) {
       setOpen(true);
       ref.current?.scrollIntoView({ block: 'start' });
     }
-  }, [defaultOpen]);
+  }, [defaultOpen, focusKey]);
   return (
-    <li ref={ref} className="scroll-mt-20">
+    <li ref={ref} id={`item-${uid.replace(/[^a-z0-9]+/gi, '-')}`} className="scroll-mt-28">
       <div className="flex items-start gap-3 py-3">
         <div className="pt-0.5">
           <StatusButton status={st} onClick={() => p.toggleDone(uid)} title={item.q} />
         </div>
         <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex min-w-0 flex-1 items-start gap-3 text-left">
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium leading-snug text-slate-900 dark:text-white">{item.q}</span>
+            <span className="block text-[15px] font-medium leading-snug text-slate-900 dark:text-white">{withCode(item.q)}</span>
             <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
               {item.level && <span>{item.level}</span>}
               {context && <span>{context}</span>}

@@ -255,6 +255,7 @@ function YourInterviews({ p }) {
 
 export default function Interviews() {
   const p = useProgress();
+  const navTo = useNavigate();
   const [params, setParams] = useSearchParams();
   const [editing, setEditing] = useState(params.get('new') ? blank({ company: params.get('company') || '', round: params.get('round') || '' }) : null);
   const [tech, setTech] = useState('All');
@@ -282,10 +283,15 @@ export default function Interviews() {
     if (editKey) document.getElementById('log-form')?.scrollIntoView({ block: 'start' });
   }, [editKey]);
 
+  const from = params.get('from');
+  const close = () => {
+    setEditing(null);
+    if (from) navTo(from);
+    else if (params.get('new')) setParams({});
+  };
   const save = (entry) => {
     p.saveInterview(entry);
-    setEditing(null);
-    if (params.get('new')) setParams({});
+    close();
   };
 
   return (
@@ -308,7 +314,7 @@ export default function Interviews() {
 
       {editing && (
         <div id="log-form" className="mb-10 scroll-mt-20">
-          <EntryForm initial={editing} companies={companies} onSave={save} onCancel={() => { setEditing(null); if (params.get('new')) setParams({}); }} />
+          <EntryForm initial={editing} companies={companies} onSave={save} onCancel={close} />
         </div>
       )}
 

@@ -79,12 +79,7 @@ export default function DsaQuestion() {
       <TopicSidebar />
       <article className="min-w-0 flex-1 space-y-10" key={uid}>
         <header>
-          <nav aria-label="Breadcrumb" className="text-sm text-slate-600 dark:text-slate-400">
-            <Link to="/dsa" className="hover:text-slate-900 dark:hover:text-white">Practice</Link>
-            <span aria-hidden="true"> / </span>
-            <Link to={`/dsa/${t.id}`} className="hover:text-slate-900 dark:hover:text-white">{t.title}</Link>
-          </nav>
-          <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">{q.title}</h1>
+          <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">{q.title}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
             <Badge className={diffColor[q.difficulty]}>{q.difficulty}</Badge>
             {q.from && (cls ? (

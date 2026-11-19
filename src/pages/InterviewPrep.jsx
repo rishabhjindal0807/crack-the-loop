@@ -4,33 +4,33 @@ import Markdown from '../lib/Markdown.jsx';
 import { useProgress } from '../lib/progress.js';
 import { allOpps, nextRound, prepTasks, RESULTS, resultLabel, whenLabel } from '../lib/opps.js';
 import { genericReady } from '../data/opportunities.js';
-import { itemById } from '../data/items.js';
-import { Card, NotesBox, ProgressBar, StatusPill } from '../components/ui.jsx';
+import { conceptById, itemById } from '../data/items.js';
+import { Badge, Card, NotesBox, ProgressBar, StatusButton, StatusPill, diffColor } from '../components/ui.jsx';
+import { QnaItem } from './QnaSection.jsx';
 
 const field = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white';
+const anchor = (id) => `item-${id.replace(/[^a-z0-9]+/gi, '-')}`;
 
 function H2({ id, children, sub }) {
   return (
     <div className="mb-4">
-      <h2 id={id} className="scroll-mt-20 text-xl font-semibold text-slate-900 dark:text-white">{children}</h2>
+      <h2 id={id} className="scroll-mt-28 text-xl font-semibold text-slate-900 dark:text-white">{children}</h2>
       {sub && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{sub}</p>}
     </div>
   );
 }
 
-function StudyLinks({ links, p }) {
+// Links to study material on this same page: they open the answer in place.
+function StudyLinks({ links, p, onOpen }) {
   if (!links?.length) return null;
   return (
     <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
       {links.map((l) => {
-        if (typeof l !== 'string') {
-          return <li key={l.url}><a href={l.url} target="_blank" rel="noreferrer" className="font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300">{l.title}</a></li>;
-        }
         const it = itemById.get(l);
         if (!it) return null;
         return (
           <li key={l} className="flex items-center gap-2">
-            <Link to={it.to} className="font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300">{it.title}</Link>
+            <button type="button" onClick={() => onOpen(l)} className="text-left font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300">{it.title}</button>
             <StatusPill status={p.status(l)} />
           </li>
         );
@@ -58,18 +58,20 @@ function Rounds({ o, p }) {
   };
   const commit = (e) => {
     e.preventDefault();
-    const rounds = editing === 'new' ? [...o.rounds, draft] : o.rounds.map((r, i) => (i === editing ? draft : r));
-    save(rounds);
+    save(editing === 'new' ? [...o.rounds, draft] : o.rounds.map((r, i) => (i === editing ? draft : r)));
     setEditing(null);
   };
   const set = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }));
+  const back = encodeURIComponent(`/interviews/${o.id}`);
 
   return (
     <div>
       <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
         {o.rounds.map((r, i) => (
           <li key={r.id} className="py-4">
-            {editing === i ? null : (
+            {editing === i ? (
+              <RoundForm draft={draft} set={set} onSubmit={commit} onCancel={() => setEditing(null)} onDelete={o.rounds.length > 1 ? () => { save(o.rounds.filter((_, k) => k !== i)); setEditing(null); } : null} />
+            ) : (
               <div className="flex flex-wrap items-start gap-x-6 gap-y-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-900 dark:text-white">{r.name}</p>
@@ -81,18 +83,15 @@ function Rounds({ o, p }) {
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{resultLabel[r.result]}</span>
                 <div className="flex gap-3 text-sm">
                   <button onClick={() => start(i)} className="font-medium text-indigo-700 hover:underline dark:text-indigo-300">Edit</button>
-                  <Link to={`/interviews?new=1&company=${encodeURIComponent(o.company)}&round=${encodeURIComponent(r.name)}`} className="font-medium text-indigo-700 hover:underline dark:text-indigo-300">Log a question</Link>
+                  <Link to={`/interviews?new=1&company=${encodeURIComponent(o.company)}&round=${encodeURIComponent(r.name)}&from=${back}`} className="font-medium text-indigo-700 hover:underline dark:text-indigo-300">Log a question</Link>
                 </div>
               </div>
             )}
-            {editing === i && <RoundForm draft={draft} set={set} onSubmit={commit} onCancel={() => setEditing(null)} onDelete={o.rounds.length > 1 ? () => { save(o.rounds.filter((_, k) => k !== i)); setEditing(null); } : null} />}
           </li>
         ))}
         {editing === 'new' && <li className="py-4"><RoundForm draft={draft} set={set} onSubmit={commit} onCancel={() => setEditing(null)} /></li>}
       </ul>
-      {editing === null && (
-        <button onClick={() => start('new')} className="mt-3 text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">Add the next round</button>
-      )}
+      {editing === null && <button onClick={() => start('new')} className="mt-3 text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">Add the next round</button>}
     </div>
   );
 }
@@ -127,28 +126,63 @@ function RoundForm({ draft, set, onSubmit, onCancel, onDelete }) {
   );
 }
 
+function StudyGroup({ g, p, open }) {
+  const done = p.doneCount(g.items);
+  return (
+    <div>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{g.title}</h3>
+        <span className="text-sm tabular-nums text-slate-600 dark:text-slate-400">{done} of {g.items.length} covered</span>
+      </div>
+      <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{g.why}</p>
+      <ul className="mt-2 divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+        {g.items.map((id) => {
+          const c = conceptById.get(id);
+          if (c) return <QnaItem key={id} item={c.item} uid={id} defaultOpen={open.id === id} focusKey={open.n} />;
+          const it = itemById.get(id); // a DSA problem: it needs the code runner, so it opens its own page
+          if (!it) return null;
+          return (
+            <li key={id} id={anchor(id)} className="flex scroll-mt-28 items-center gap-3 py-3">
+              <StatusButton status={p.status(id)} onClick={() => p.toggleDone(id)} title={it.title} />
+              <Link to={it.to} className="min-w-0 flex-1 text-[15px] font-medium text-slate-900 hover:text-indigo-700 dark:text-white dark:hover:text-indigo-300">{it.title}</Link>
+              <Badge className={diffColor[it.difficulty]}>{it.difficulty}</Badge>
+              <Link to={it.to} className="text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">Open and run</Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export default function InterviewPrep() {
   const { oppId } = useParams();
   const nav = useNavigate();
   const p = useProgress();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [open, setOpenState] = useState({ id: null, n: 0 });
   const o = allOpps(p).find((x) => x.id === oppId);
   if (!o) return <p>Interview not found. <Link to="/interviews" className="text-indigo-700 underline">See all interviews</Link></p>;
 
+  // open a study item in place (and scroll to it), even if it was opened before
+  const openItem = (id) => {
+    setOpenState((s) => ({ id, n: s.n + 1 }));
+    if (!conceptById.get(id)) document.getElementById(anchor(id))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const tasks = prepTasks(o);
   const done = tasks.filter((k) => p.prepDone(k)).length;
+  const studyIds = o.tailored ? o.study.flatMap((g) => g.items) : [];
   const next = nextRound(o);
   const asked = p.interviews().filter((x) => (x.company || '').toLowerCase() === o.company.toLowerCase());
   const sections = o.tailored
-    ? [['rounds', 'Rounds'], ['plan', 'Prep plan'], ['company', 'The company'], ['want', 'What they want'], ['match', 'Your match'], ['gaps', 'Gaps to fill'], ['likely', 'Likely questions'], ['ask', 'Ask them'], ['ready', 'Have ready'], ['jd', 'Job description']]
+    ? [['rounds', 'Rounds'], ['plan', 'Plan'], ['study', 'Study'], ['likely', 'Practice questions'], ['company', 'Company'], ['fit', 'Job and you'], ['ask', 'Ask them'], ['ready', 'Have ready'], ['jd', 'Job description']]
     : [['rounds', 'Rounds'], ['ready', 'Have ready'], ['jd', 'Job description']];
+  const go = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   return (
     <div className="max-w-4xl">
-      <nav aria-label="Breadcrumb" className="text-sm text-slate-600 dark:text-slate-400">
-        <Link to="/interviews" className="hover:text-slate-900 dark:hover:text-white">Interviews</Link>
-      </nav>
-      <h1 className="mt-2 text-[34px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">{o.company}</h1>
+      <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">{o.company}</h1>
       <p className="mt-1 text-[17px] text-slate-700 dark:text-slate-300">{o.role}</p>
       <dl className="mt-4 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
         {[['Where', o.location], ['Experience asked', o.experience], ['Found via', o.source]].filter(([, v]) => v).map(([k, v]) => (
@@ -160,15 +194,19 @@ export default function InterviewPrep() {
       </dl>
 
       <Card className="mt-6 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="text-sm text-slate-600 dark:text-slate-400">{next ? 'Next' : 'No round coming up'}</p>
+        {next && <p className="text-lg font-semibold text-slate-900 dark:text-white">{next.name}: {whenLabel(next.date, next.time)}</p>}
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-sm text-slate-600 dark:text-slate-400">{next ? 'Next' : 'No round coming up'}</p>
-            {next && <p className="text-lg font-semibold text-slate-900 dark:text-white">{next.name}: {whenLabel(next.date, next.time)}</p>}
+            <p className="mb-1.5 text-sm text-slate-600 dark:text-slate-400">Plan tasks done</p>
+            <ProgressBar value={done} total={tasks.length} label="Plan tasks done" />
           </div>
-          <div className="w-full sm:w-64">
-            <p className="mb-1.5 text-sm text-slate-600 dark:text-slate-400">Prep done</p>
-            <ProgressBar value={done} total={tasks.length} label="Prep tasks done" />
-          </div>
+          {studyIds.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-sm text-slate-600 dark:text-slate-400">Study topics covered</p>
+              <ProgressBar value={p.doneCount(studyIds)} total={studyIds.length} label="Study topics covered" />
+            </div>
+          )}
         </div>
       </Card>
 
@@ -176,7 +214,7 @@ export default function InterviewPrep() {
         <ul className="flex gap-5 py-2.5 text-sm">
           {sections.map(([id, label]) => (
             <li key={id} className="shrink-0">
-              <a href={`#${id}`} onClick={(e) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); }} className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{label}</a>
+              <a href={`#${id}`} onClick={(e) => { e.preventDefault(); go(id); }} className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{label}</a>
             </li>
           ))}
         </ul>
@@ -187,17 +225,23 @@ export default function InterviewPrep() {
           <H2 id="rounds" sub="Fill in the time, type of round and interviewer when the recruiter confirms them.">Rounds</H2>
           <Rounds o={o} p={p} />
           {asked.length > 0 && (
-            <p className="mt-4 text-sm text-slate-700 dark:text-slate-300">
-              You've logged {asked.length} question{asked.length > 1 ? 's' : ''} from {o.company}.{' '}
-              <Link to={`/interviews?company=${encodeURIComponent(o.company)}`} className="font-medium text-indigo-700 hover:underline dark:text-indigo-300">See them</Link>
-            </p>
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Questions you were asked</h3>
+              <ul className="mt-2 space-y-2">
+                {asked.map((x) => (
+                  <li key={x.id} className="text-[15px] text-slate-800 dark:text-slate-200">
+                    {x.question} <span className="text-sm text-slate-600 dark:text-slate-400">({x.round || 'round not set'})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </section>
 
         {o.tailored && (
           <>
             <section aria-labelledby="plan">
-              <H2 id="plan" sub="Small steps, one day at a time. Tick them off as you go.">Prep plan</H2>
+              <H2 id="plan" sub="Small steps, one day at a time. The blue links open the study material further down this page.">Plan until the interview</H2>
               <div className="space-y-8">
                 {o.plan.map((d) => (
                   <div key={d.day}>
@@ -208,7 +252,7 @@ export default function InterviewPrep() {
                         return (
                           <li key={it.id}>
                             <Check id={`t-${it.id}`} checked={p.prepDone(key)} onChange={() => p.togglePrep(key)}>{it.text}</Check>
-                            <div className="ml-8"><StudyLinks links={it.links} p={p} /></div>
+                            <div className="ml-8"><StudyLinks links={it.links} p={p} onOpen={openItem} /></div>
                           </li>
                         );
                       })}
@@ -218,8 +262,36 @@ export default function InterviewPrep() {
               </div>
             </section>
 
+            <section aria-labelledby="study">
+              <H2 id="study" sub="Everything to learn for this interview, right here. Open a question to read the answer, then set it to Solved, Revise or Mastered and add your own notes.">Study material</H2>
+              <div className="space-y-10">
+                {o.study.map((g) => <StudyGroup key={g.title} g={g} p={p} open={open} />)}
+              </div>
+            </section>
+
+            <section aria-labelledby="likely">
+              <H2 id="likely" sub="Questions they will probably ask. Open each one and practise saying the answer out loud.">Practice questions</H2>
+              <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                {o.likely.map((l) => (
+                  <li key={l.q}>
+                    <details className="group py-3">
+                      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-[15px] font-medium text-slate-900 dark:text-white">
+                        {l.q}
+                        <svg viewBox="0 0 20 20" width="20" height="20" className="mt-0.5 shrink-0 text-slate-500 transition-transform group-open:rotate-90" aria-hidden="true"><path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      </summary>
+                      <div className="mt-2 pr-8">
+                        <Markdown>{l.a}</Markdown>
+                        {l.links?.length > 0 && <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Read more on this page:</p>}
+                        <StudyLinks links={l.links} p={p} onOpen={openItem} />
+                      </div>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
             <section aria-labelledby="company">
-              <H2 id="company" sub="From public news articles and profiles; check their website before the call.">The company</H2>
+              <H2 id="company" sub="From public news articles and profiles. Check their website before the call.">About {o.company}</H2>
               <ul className="list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-slate-800 marker:text-slate-400 dark:text-slate-200">
                 {o.about.map((a) => <li key={a}>{a}</li>)}
               </ul>
@@ -231,59 +303,40 @@ export default function InterviewPrep() {
               </ul>
             </section>
 
-            <section aria-labelledby="want">
-              <H2 id="want" sub="The job description, in simple words.">What they want</H2>
-              <Markdown>{o.want.map((w) => `- ${w}`).join('\n')}</Markdown>
-            </section>
-
-            <section aria-labelledby="match">
-              <H2 id="match" sub="What they need, and the proof from your resume. Use these as talking points.">Your match</H2>
-              <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-                {o.match.map((m) => (
-                  <li key={m.need} className="grid gap-1 py-3.5 sm:grid-cols-[220px_1fr] sm:gap-6">
-                    <span className="font-medium text-slate-900 dark:text-white">{m.need}</span>
-                    <span className="text-[15px] text-slate-700 dark:text-slate-300">{m.proof}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section aria-labelledby="gaps">
-              <H2 id="gaps" sub="What the job asks for that your resume doesn't show yet. Learn the basics and be honest about it.">Gaps to fill</H2>
-              <ul className="space-y-6">
-                {o.gaps.map((g) => (
-                  <li key={g.gap}>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{g.gap}</h3>
-                    <p className="mt-1 text-[15px] text-slate-700 dark:text-slate-300"><span className="font-medium">Why it matters:</span> {g.why}</p>
-                    <p className="mt-1 text-[15px] text-slate-700 dark:text-slate-300"><span className="font-medium">What to do:</span> {g.how}</p>
-                    <StudyLinks links={g.links} p={p} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section aria-labelledby="likely">
-              <H2 id="likely" sub="Open each one and practise saying the answer out loud.">Likely questions</H2>
-              <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-                {o.likely.map((l) => (
-                  <li key={l.q}>
-                    <details className="group py-3">
-                      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-[15px] font-medium text-slate-900 dark:text-white">
-                        {l.q}
-                        <svg viewBox="0 0 20 20" width="20" height="20" className="mt-0.5 shrink-0 text-slate-500 transition-transform group-open:rotate-90" aria-hidden="true"><path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      </summary>
-                      <div className="mt-2 pr-8">
-                        <Markdown>{l.a}</Markdown>
-                        <StudyLinks links={l.links} p={p} />
-                      </div>
-                    </details>
-                  </li>
-                ))}
-              </ul>
+            <section aria-labelledby="fit" className="space-y-10">
+              <H2 id="fit" sub="What the job asks for, what you already have, and what to fill.">The job and you</H2>
+              <div>
+                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">What they want, in simple words</h3>
+                <Markdown>{o.want.map((w) => `- ${w}`).join('\n')}</Markdown>
+              </div>
+              <div>
+                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Your match</h3>
+                <ul className="divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                  {o.match.map((m) => (
+                    <li key={m.need} className="grid gap-1 py-3.5 sm:grid-cols-[220px_1fr] sm:gap-6">
+                      <span className="font-medium text-slate-900 dark:text-white">{m.need}</span>
+                      <span className="text-[15px] text-slate-700 dark:text-slate-300">{m.proof}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Gaps to fill</h3>
+                <ul className="space-y-6">
+                  {o.gaps.map((g) => (
+                    <li key={g.gap}>
+                      <h4 className="font-semibold text-slate-900 dark:text-white">{g.gap}</h4>
+                      <p className="mt-1 text-[15px] text-slate-700 dark:text-slate-300"><span className="font-medium">Why it matters:</span> {g.why}</p>
+                      <p className="mt-1 text-[15px] text-slate-700 dark:text-slate-300"><span className="font-medium">What to do:</span> {g.how}</p>
+                      <StudyLinks links={g.links} p={p} onOpen={openItem} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </section>
 
             <section aria-labelledby="ask">
-              <H2 id="ask" sub="Pick 4–5. Asking good questions shows you think like an owner.">Questions to ask them</H2>
+              <H2 id="ask" sub="Pick 4–5. Good questions show you think like an owner.">Questions to ask them</H2>
               <ol className="list-decimal space-y-2 pl-5 text-[15px] text-slate-800 marker:text-slate-500 dark:text-slate-200">
                 {o.askThem.map((q) => <li key={q}>{q}</li>)}
               </ol>
@@ -301,7 +354,7 @@ export default function InterviewPrep() {
           </ul>
           {!o.tailored && (
             <p className="mt-6 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              Want a full plan like the one for Iksha Labs (company research, your match, gaps, likely questions)? Send Claude the job description and it will add one here.
+              Want a full plan like the one for Iksha Labs (company research, your match, gaps, study material, practice questions)? Send Claude the job description and it will add one here.
             </p>
           )}
         </section>

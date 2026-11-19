@@ -39,13 +39,7 @@ export default function ClassDetail() {
 
   return (
     <div className="max-w-4xl">
-      <nav aria-label="Breadcrumb" className="text-sm text-slate-600 dark:text-slate-400">
-        <Link to="/classes" className="hover:text-slate-900 dark:hover:text-white">Practice by class</Link>
-        <span aria-hidden="true"> / </span>
-        {c.unitTitle}
-      </nav>
-
-      <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">
           <span className="text-slate-500 dark:text-slate-400">{c.code}</span> {c.title}
         </h1>

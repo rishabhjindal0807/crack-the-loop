@@ -15,6 +15,246 @@ tagline: Python/FastAPI, async SQLAlchemy + PostgreSQL, Redis, API design, OAuth
 > **Note:** answers tagged **From resume** are suggested framings built from your resume. Where they give specifics (which library, which incident, which numbers), swap in what actually happened. Never claim a detail you can't back up.
 :::
 
+# Python for JavaScript developers {#python-from-js}
+You already know JavaScript and TypeScript well. Learn Python by mapping each idea to the JS you know. Four days is enough to read, discuss and write simple Python; it isn't enough to become an expert, so be honest about that in the interview (see the last question).
+
+## Python vs JavaScript: the basics side by side [Core]
+| Idea | JavaScript | Python |
+|---|---|---|
+| Variable | `let x = 5` | `x = 5` |
+| Constant | `const MAX = 10` | `MAX = 10` (just a naming rule) |
+| Nothing | `null` / `undefined` | `None` |
+| Booleans | `true && false \|\| !x` | `True and False or not x` |
+| Blocks | `{ }` braces | **indentation** (4 spaces) after a `:` |
+| If | `if (a) {} else if (b) {} else {}` | `if a:` / `elif b:` / `else:` |
+| Function | `function add(a, b) { return a + b }` | `def add(a, b):` then `return a + b` on the next line |
+| Arrow function | `x => x * 2` | `lambda x: x * 2` (one expression only) |
+| Template string | `` `Hi ${name}` `` | `f"Hi {name}"` |
+| Length | `arr.length` | `len(arr)` |
+| Loop over items | `for (const x of items)` | `for x in items:` |
+| Loop with index | `items.forEach((x, i) => …)` | `for i, x in enumerate(items):` |
+| Count 0..4 | `for (let i = 0; i < 5; i++)` | `for i in range(5):` |
+| Import | `import { x } from './mod'` | `from mod import x` |
+| Print | `console.log(x)` | `print(x)` |
+
+```python
+def greet(name, times=1):
+    for i in range(times):
+        print(f"Hello {name} #{i + 1}")
+
+greet("Rishabh", times=2)   # named (keyword) arguments are normal in Python
+```
+
+**Two traps for JS developers**
+- **Empty list `[]` and empty dict `{}` are falsy in Python**, but truthy in JavaScript. `if items:` means "if the list is not empty".
+- **`==` compares values** (`[1, 2] == [1, 2]` is `True`). `is` checks it's the same object (like `===` on objects). Use `is` only with `None`: `if x is None:`.
+
+## Lists, dicts, sets and comprehensions [Core]
+| JavaScript | Python |
+|---|---|
+| Array `[1, 2, 3]` | list `[1, 2, 3]` |
+| `arr.push(4)` | `lst.append(4)` |
+| `arr.slice(1, 3)` | `lst[1:3]` (slicing), `lst[-1]` is the last item |
+| Object / Map `{ a: 1 }` | dict `{"a": 1}`, read with `d["a"]` or `d.get("a", default)` |
+| `Object.keys(o)` / `Object.entries(o)` | `d.keys()` / `d.items()` |
+| `new Set([1, 2])` | `{1, 2}` or `set()` |
+| `key in obj` | `key in d` (also works for lists and sets) |
+| fixed list | tuple `(1, 2)`, which can't be changed |
+
+**Comprehensions replace most `map` and `filter` calls:**
+
+```python
+nums = [1, 2, 3, 4, 5]
+doubled = [n * 2 for n in nums]                 # nums.map(n => n * 2)
+evens = [n for n in nums if n % 2 == 0]         # nums.filter(n => n % 2 === 0)
+by_id = {u["id"]: u for u in users}             # Object.fromEntries(users.map(u => [u.id, u]))
+total = sum(n for n in nums)                    # nums.reduce((a, n) => a + n, 0)
+```
+
+**Useful built-ins:** `sorted(items, key=lambda u: u["age"])`, `min`, `max`, `any`, `all`, `zip(a, b)`, `reversed`.
+For counting and grouping use `collections.Counter` and `collections.defaultdict(list)`.
+
+## Functions, arguments and type hints [Core]
+```python
+def book(patient: str, slot_id: int, notify: bool = True) -> dict:
+    return {"patient": patient, "slot_id": slot_id, "notify": notify}
+
+book("Asha", 42)                       # positional
+book(patient="Asha", slot_id=42)       # keyword: clearer, very common
+def log(*args, **kwargs):              # like (...args) and an options object
+    print(args, kwargs)
+```
+
+- **Type hints** look like TypeScript (`name: str`, `-> dict`, `list[int]`, `str | None`), but **Python does not check them at runtime.** A tool like `mypy` checks them, and FastAPI and Pydantic *use* them to validate data.
+- **Mutable default trap:** `def add(item, bucket=[])` shares **one** list across all calls. Use `bucket=None`, then `if bucket is None: bucket = []`.
+
+## Classes, dataclasses and Pydantic models [Core]
+```python
+class Agent:
+    def __init__(self, name: str):      # constructor
+        self.name = name                # `self` is like `this`, but you write it explicitly
+
+    def speak(self, text: str) -> str:
+        return f"{self.name}: {text}"
+
+a = Agent("Iksha")                      # no `new` keyword
+print(a.speak("Namaste"))
+```
+
+**Plain data: use a dataclass** (it writes `__init__` and equality for you):
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Slot:
+    id: int
+    doctor: str
+    free: bool = True
+```
+
+**Data that comes from outside (API bodies, LLM output): use Pydantic.** It validates and converts types, much like zod in TypeScript:
+
+```python
+from pydantic import BaseModel
+
+class BookingIn(BaseModel):
+    patient_name: str
+    slot_id: int
+
+BookingIn(patient_name="Asha", slot_id="42")   # "42" becomes 42; a bad value raises a clear error
+```
+
+## Errors and "with" (context managers) [Core]
+```python
+try:
+    slot = find_slot(slot_id)
+except KeyError:                      # catch a specific error, like catch + instanceof
+    raise ValueError(f"No slot {slot_id}")
+finally:
+    print("done")
+
+with open("calls.log") as f:          # `with` closes the file even if an error happens
+    for line in f:
+        print(line.strip())
+```
+
+- `raise` is JavaScript's `throw`.
+- `with` is like `try/finally` cleanup packaged for you. It's used for files, DB sessions, locks and HTTP clients.
+
+## async/await in Python vs JavaScript [Deep dive]
+The keywords are the same, but the behaviour is different in important ways.
+
+| | JavaScript | Python (`asyncio`) |
+|---|---|---|
+| Event loop | Always running | You start it: `asyncio.run(main())`. FastAPI and Uvicorn start it for you |
+| Calling an async function | Starts running straight away and returns a Promise | Returns a **coroutine** that does **nothing** until you `await` it or schedule it |
+| Run things in parallel | `await Promise.all([a(), b()])` | `await asyncio.gather(a(), b())` |
+| Start now, await later | `const p = fetchX()` | `task = asyncio.create_task(fetch_x())` |
+| Timeout | `AbortController` / `Promise.race` | `async with asyncio.timeout(2):` (3.11+) or `asyncio.wait_for(…, 2)` |
+| Sleep | `await new Promise(r => setTimeout(r, 1000))` | `await asyncio.sleep(1)` |
+
+```python
+import asyncio
+
+async def stt(audio):   await asyncio.sleep(0.2); return "book a slot"
+async def lookup(q):    await asyncio.sleep(0.3); return ["10:00", "11:30"]
+
+async def main():
+    text, slots = await asyncio.gather(stt(b"..."), lookup("dr mehta"))   # ~0.3 s, not 0.5 s
+    print(text, slots)
+
+asyncio.run(main())
+```
+
+**The big rule:** never call blocking code inside `async def`. That means `time.sleep`, `requests.get` and heavy CPU work. They freeze the whole event loop, so every live call on that worker stalls. Use async libraries (`httpx`, `asyncpg`), or move the work off the loop with `await asyncio.to_thread(fn)` or a separate worker. In JavaScript you rarely hit this, because almost all I/O is already async.
+
+## Write a small FastAPI service (REST + WebSocket) [Coding]
+FastAPI is the Python version of an Express or Nest service, with built-in validation from type hints and automatic API docs at `/docs`.
+
+```python
+# main.py   run with:  pip install fastapi uvicorn   then   uvicorn main:app --reload
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class BookingIn(BaseModel):
+    patient_name: str
+    slot_id: int
+
+bookings: dict[int, BookingIn] = {}          # in memory, just for the example
+
+@app.get("/health")
+async def health():
+    return {"ok": True}                       # dicts are returned as JSON
+
+@app.post("/bookings", status_code=201)
+async def create_booking(body: BookingIn):    # body is validated automatically (422 if bad)
+    if body.slot_id in bookings:
+        raise HTTPException(status_code=409, detail="Slot already booked")
+    bookings[body.slot_id] = body
+    return {"slot_id": body.slot_id, "patient_name": body.patient_name}
+
+@app.websocket("/calls/{call_id}/audio")
+async def call_audio(ws: WebSocket, call_id: str):
+    await ws.accept()
+    try:
+        while True:
+            chunk = await ws.receive_bytes()   # audio frames from the phone provider
+            # real version: feed chunk to streaming STT → agent → streaming TTS
+            await ws.send_bytes(chunk)         # echo back as a placeholder
+    except WebSocketDisconnect:
+        print(f"call {call_id} ended")
+```
+
+**Be ready to explain:**
+- **Path and body:** path parameters come from the URL, and the body is parsed into the Pydantic model.
+- **async def or def:** `async def` endpoints run on the event loop. Plain `def` endpoints run in a thread pool, which is safe for blocking code.
+- **Dependencies:** `Depends(...)` injects things like the DB session or the current user.
+- **Production:** run several Uvicorn workers behind a load balancer. On Kubernetes, use more pods, and sticky routing for long WebSocket calls.
+
+## Python tooling: environments, packages, tests [Core]
+| Need | JavaScript | Python |
+|---|---|---|
+| Isolated dependencies | `node_modules` per project | a **virtual environment**: `python -m venv .venv`, then `source .venv/bin/activate` |
+| Install | `npm install x` | `pip install x` (or the faster `uv add x`) |
+| Lock file | `package-lock.json` | `requirements.txt`, `uv.lock` or `poetry.lock` |
+| Project file | `package.json` | `pyproject.toml` |
+| Tests | Jest / Vitest | **pytest**: files `test_*.py`, functions `test_*`, plain `assert` |
+| Lint + format | ESLint + Prettier | **ruff** (does both) |
+| Type check | `tsc` | **mypy** or pyright |
+
+```python
+# test_bookings.py
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
+def test_double_booking_is_rejected():
+    assert client.post("/bookings", json={"patient_name": "Asha", "slot_id": 1}).status_code == 201
+    assert client.post("/bookings", json={"patient_name": "Ravi", "slot_id": 1}).status_code == 409
+```
+
+## Python gotchas interviewers like to ask [Deep dive]
+- **Mutable default arguments** (`def f(x=[])`) are shared between calls. Use `None`.
+- **`is` vs `==`:** `is` means the same object; `==` means equal values.
+- **Division:** `7 / 2` is `3.5` and `7 // 2` is `3`. Integers never overflow (they can be huge).
+- **Copies:** `b = a` copies the reference, `a.copy()` makes a shallow copy, and `copy.deepcopy(a)` copies nested data too. It's the same idea as JavaScript objects.
+- **The GIL:** in standard CPython only one thread runs Python code at a time. Threads still help with waiting on I/O; for CPU-heavy work use processes (`multiprocessing`) or native libraries. Python 3.13 has an optional experimental build without the GIL.
+- **Late binding in loops:** `[lambda: i for i in range(3)]` all return 2. Fix it with `lambda i=i: i`.
+- **Truthiness:** `[]`, `{}`, `""`, `0` and `None` are all falsy.
+
+## "How strong is your Python?" How do you answer honestly? [From resume]
+Never bluff about something on your resume. Interviewers dig into it, and getting caught costs more than the gap itself. Be precise about what you did and didn't do:
+
+> "Our backend at OptimaAI is Python and FastAPI. I designed the services, the async data layer and the workflow architecture, and I review that code. My own day-to-day coding has been stronger in TypeScript and JavaScript, so on Python I'm comfortable reading, reviewing and discussing design, and I'm actively getting faster at writing it. I pick up languages quickly: the hard parts of this job are architecture, async I/O, reliability and LLM behaviour, and those carry across."
+
+**Then show it:** be ready to write the small FastAPI service above, and to explain async vs blocking code. That turns "not strong yet" into "learns fast and knows what matters".
+
+**After the interview:** update your resume so the Python line says exactly what you did (for example, "architected a Python/FastAPI platform"), so it can't be misread.
+
 # Python & async {#python}
 
 ## How does asyncio work? When is async actually faster? [Core]

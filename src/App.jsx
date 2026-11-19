@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Today from './pages/Home.jsx';
 import DsaHome from './pages/DsaHome.jsx';
 import DsaTopic from './pages/DsaTopic.jsx';
@@ -14,7 +14,10 @@ import CommandSearch from './components/CommandSearch.jsx';
 import { Icon } from './components/ui.jsx';
 import { sections } from './data/sections.js';
 import { links, profile } from './data/profile.js';
-import { progressStore } from './lib/progress.js';
+import { progressStore, useProgress } from './lib/progress.js';
+import { topicById } from './data/dsa/index.js';
+import { classById } from './data/classes.js';
+import { allOpps } from './lib/opps.js';
 
 // The problem page carries KaTeX + the diagram engine; load it only when a problem is opened.
 const DsaQuestion = lazy(() => import('./pages/DsaQuestion.jsx'));
@@ -45,6 +48,49 @@ function ThemeToggle() {
     >
       <Icon name={dark ? 'sun' : 'moon'} size={18} />
     </button>
+  );
+}
+
+// One back button for every inner page: goes back to where you came from, or up to the parent page.
+function BackBar() {
+  const { pathname, search } = useLocation();
+  const nav = useNavigate();
+  const p = useProgress();
+  const seg = pathname.split('/').filter(Boolean);
+  const from = new URLSearchParams(search).get('from');
+  let crumbs = [];
+  if (seg[0] === 'dsa' && seg.length === 3) crumbs = [{ to: '/dsa', label: 'Practice' }, { to: `/dsa/${seg[1]}`, label: topicById[seg[1]]?.title || seg[1] }];
+  else if (seg[0] === 'dsa' && seg.length === 2) crumbs = [{ to: '/dsa', label: 'Practice by topic' }];
+  else if (seg[0] === 'classes' && seg.length === 2) crumbs = [{ to: '/classes', label: 'Practice by class' }, ...(classById[seg[1]] ? [{ label: classById[seg[1]].unitTitle }] : [])];
+  else if (seg[0] === 'interviews' && seg.length === 2) crumbs = [{ to: '/interviews', label: 'Interviews' }];
+  else if (['ui', 'ai', 'backend'].includes(seg[0]) && seg.length === 2) crumbs = [{ to: `/${seg[0]}`, label: sections.find((x) => x.id === seg[0])?.title }];
+  else if (seg[0] === 'interviews' && from) {
+    const o = allOpps(p).find((x) => `/interviews/${x.id}` === from);
+    crumbs = [{ to: from, label: o ? `${o.company} prep plan` : 'Prep plan' }];
+  }
+  if (!crumbs.length) return null;
+  const parent = [...crumbs].reverse().find((c) => c.to);
+  const inApp = (window.history.state?.idx ?? 0) > 0;
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <button
+        onClick={() => (inApp ? nav(-1) : nav(parent.to))}
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white pl-2 pr-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+      >
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M12 5 7 10l5 5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        Back
+      </button>
+      <nav aria-label="Breadcrumb" className="min-w-0 text-sm text-slate-600 dark:text-slate-400">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          {crumbs.map((c, i) => (
+            <li key={i} className="flex items-center gap-1.5">
+              {i > 0 && <span aria-hidden="true">/</span>}
+              {c.to ? <Link to={c.to} className="hover:text-slate-900 hover:underline dark:hover:text-white">{c.label}</Link> : <span>{c.label}</span>}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </div>
   );
 }
 
@@ -174,7 +220,8 @@ export default function App() {
       </nav>
 
       <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 py-8 focus:outline-none sm:py-10">
-        <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+        <BackBar />
+        <Suspense fallback={<p className="text-sm text-slate-600 dark:text-slate-400">Loading…</p>}>
           <Routes>
             <Route path="/" element={<Today />} />
             <Route path="/dsa" element={<DsaHome />} />

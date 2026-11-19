@@ -17,10 +17,7 @@ export default function DsaTopic() {
     <div className="flex gap-10">
       <TopicSidebar />
       <div className="min-w-0 flex-1">
-        <nav aria-label="Breadcrumb" className="text-sm text-slate-600 dark:text-slate-400">
-          <Link to="/dsa" className="hover:text-slate-900 dark:hover:text-white">Practice by topic</Link>
-        </nav>
-        <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">{t.title}</h1>
+        <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">{t.title}</h1>
         {t.lecture && <p className="mt-1 text-[15px] text-slate-600 dark:text-slate-400">{t.lecture}</p>}
         <div className="mt-4 max-w-xs">
           <ProgressBar value={p.doneCount(ids)} total={ids.length} label={`${t.title} practised`} />
