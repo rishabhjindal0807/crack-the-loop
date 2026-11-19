@@ -155,6 +155,25 @@ export default {
       lc: 'remove-nth-node-from-end-of-list',
       tags: ['two-pointers', 'dummy-node'],
       statement: 'Given the `head` of a linked list, remove the n-th node from the end and return its head.\n\n**Example:** `1→2→3→4→5, n = 2` → `1→2→3→5`',
+      visual: {
+        title: 'One pass on 1 → 2 → 3 → 4 → 5, n = 2',
+        steps: [
+          { order: ['D', '1', '2', '3', '4', '5', 'null'], edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: 'D', fast: 'D' },
+            code: 'slow = fast = dummy', caption: 'Both pointers start at a dummy node placed before head.' },
+          { edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: 'D', fast: '3' },
+            code: 'for (i = 0; i <= n; i++) fast = fast.next', caption: 'Move fast n + 1 = 3 steps. Now exactly n = 2 nodes sit between slow and fast.' },
+          { edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: '1', fast: '4' },
+            code: 'slow = slow.next; fast = fast.next', caption: 'Move both together — the gap stays the same.' },
+          { edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: '2', fast: '5' },
+            code: 'slow = slow.next; fast = fast.next', caption: 'Still moving together.' },
+          { edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: '3', fast: 'null' },
+            code: 'fast === null → stop', caption: 'fast fell off the end, so slow is just BEFORE the 2nd node from the end (4).' },
+          { edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '5'], ['4', '5'], ['5', 'null']], changed: [['3', '5']], pointers: { slow: '3' },
+            code: 'slow.next = slow.next.next', caption: '3 now skips 4. Nothing points to 4 any more, so it is out of the list.' },
+          { order: ['D', '1', '2', '3', '5', 'null'], edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '5'], ['5', 'null']], pointers: {},
+            code: 'return dummy.next', caption: 'Result: 1 → 2 → 3 → 5. If n were 5 (the head), slow would stop at the dummy — that is why it exists.' },
+        ],
+      },
       approaches: [
         {
           name: 'Two passes (count length)',
@@ -229,6 +248,102 @@ export default {
         { args: [[1], 1], expected: [] },
         { args: [[1, 2], 1], expected: [1] },
         { args: [[1, 2, 3], 3], expected: [2, 3], label: 'remove the head' },
+      ],
+    },
+    {
+      id: 'swap-nodes-in-pairs',
+      title: 'Swap Nodes in Pairs',
+      difficulty: 'Medium',
+      lc: 'swap-nodes-in-pairs',
+      from: 'IL9 – Linked List',
+      tags: ['dummy-node', 'pointer-manipulation', 'recursion'],
+      statement: 'Swap every two adjacent nodes and return the new head. You must change the **nodes** (their `next` pointers), not the values inside them.\n\n**Example:** `1→2→3→4` → `2→1→4→3`, `1→2→3` → `2→1→3`',
+      visual: {
+        title: 'Iterative swap on 1 → 2 → 3 → 4',
+        steps: [
+          { order: ['D', '1', '2', '3', '4', 'null'], edges: [['D', '1'], ['1', '2'], ['2', '3'], ['3', '4'], ['4', 'null']], pointers: { prev: 'D', first: '1', second: '2' },
+            code: 'first = prev.next; second = first.next', caption: 'A dummy node sits before head, so the first pair has a “prev” too. Mark the pair to swap.' },
+          { edges: [['D', '1'], ['1', '3'], ['2', '3'], ['3', '4'], ['4', 'null']], changed: [['1', '3']], pointers: { prev: 'D', first: '1', second: '2' },
+            code: 'first.next = second.next', caption: '1 now skips over 2 and points at the rest of the list (3). Nothing is lost — 2 still points to 3.' },
+          { edges: [['D', '1'], ['1', '3'], ['2', '1'], ['3', '4'], ['4', 'null']], changed: [['2', '1']], pointers: { prev: 'D', first: '1', second: '2' },
+            code: 'second.next = first', caption: '2 points back to 1 — the pair is reversed internally.' },
+          { edges: [['D', '2'], ['2', '1'], ['1', '3'], ['3', '4'], ['4', 'null']], changed: [['D', '2']], pointers: { prev: 'D', first: '1', second: '2' },
+            code: 'prev.next = second', caption: 'Reconnect the pair to what came before it: dummy → 2.' },
+          { order: ['D', '2', '1', '3', '4', 'null'], edges: [['D', '2'], ['2', '1'], ['1', '3'], ['3', '4'], ['4', 'null']], pointers: { prev: '1', first: '3', second: '4' },
+            code: 'prev = first', caption: 'Redrawn in list order: dummy → 2 → 1 → 3 → 4. Node 1 is now the tail of the swapped pair, so it becomes prev for the next pair (3, 4).' },
+          { edges: [['D', '2'], ['2', '1'], ['1', '3'], ['3', 'null'], ['4', 'null']], changed: [['3', 'null']], pointers: { prev: '1', first: '3', second: '4' },
+            code: 'first.next = second.next', caption: '3 skips over 4 (here the rest is null).' },
+          { edges: [['D', '2'], ['2', '1'], ['1', '3'], ['3', 'null'], ['4', '3']], changed: [['4', '3']], pointers: { prev: '1', first: '3', second: '4' },
+            code: 'second.next = first', caption: '4 points back to 3.' },
+          { edges: [['D', '2'], ['2', '1'], ['1', '4'], ['4', '3'], ['3', 'null']], changed: [['1', '4']], pointers: { prev: '1', first: '3', second: '4' },
+            code: 'prev.next = second', caption: 'Connect the previous pair (ending at 1) to the new front of this pair (4).' },
+          { order: ['D', '2', '1', '4', '3', 'null'], edges: [['D', '2'], ['2', '1'], ['1', '4'], ['4', '3'], ['3', 'null']], pointers: { prev: '3' },
+            code: 'prev = first → prev.next === null, loop ends', caption: 'Fewer than two nodes left, so stop. Return dummy.next → 2 → 1 → 4 → 3.' },
+        ],
+      },
+      approaches: [
+        {
+          name: 'Recursive',
+          time: 'O(n)',
+          space: 'O(n) stack',
+          idea: 'Swap the first two nodes, and let recursion swap the rest: `first.next = swapPairs(second.next)`, then `second.next = first`; `second` is the new head.',
+          code: `
+            function swapPairs(head) {
+              if (!head || !head.next) return head;
+              const first = head, second = head.next;
+              first.next = swapPairs(second.next);
+              second.next = first;
+              return second;
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (iterative, LeetCode)',
+          time: 'O(n)',
+          space: 'O(1)',
+          idea: `
+            Walk pair by pair with \`prev\` pointing at the node **before** the pair. Three pointer writes swap it —
+            \`first.next = second.next\`, \`second.next = first\`, \`prev.next = second\` — then \`prev = first\`
+            (the old first is now the pair's tail). Step through the visual above to watch each write.
+          `,
+          code: `
+            var swapPairs = function (head) {
+              let dummy = new ListNode(0);
+              let prev = dummy;
+              let first, second;
+
+              prev.next = head;
+              while (prev.next != null && prev.next.next != null) {
+                first = prev.next;
+                second = first.next;
+
+                first.next = second.next;
+                second.next = first;
+                prev.next = second;
+                prev = first;
+              }
+              return dummy.next;
+            };
+          `,
+        },
+      ],
+      explanation: `
+        **Order matters.** Write \`first.next = second.next\` first: if you did \`second.next = first\` first, you'd lose the only
+        reference to the rest of the list. A good habit — when re-pointing, save or reconnect the “rest” before breaking a link.
+
+        **Why the dummy node:** the first pair has no node before it; the dummy gives it one, so the head swap is not a special case,
+        and \`dummy.next\` is always the answer.
+
+        **Follow-up:** Reverse Nodes in k-Group (LC 25) generalises this — reverse k nodes at a time with the same prev/first bookkeeping.
+      `,
+      fn: 'swapPairs',
+      input: list,
+      output: toArr,
+      tests: [
+        { args: [[1, 2, 3, 4]], expected: [2, 1, 4, 3] },
+        { args: [[]], expected: [] },
+        { args: [[1]], expected: [1] },
+        { args: [[1, 2, 3]], expected: [2, 1, 3], label: 'odd length — last node stays' },
       ],
     },
     {

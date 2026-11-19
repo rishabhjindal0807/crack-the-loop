@@ -4,6 +4,7 @@ import { topicById } from '../data/dsa/index.js';
 import TopicSidebar from '../components/TopicSidebar.jsx';
 import Markdown from '../lib/Markdown.jsx';
 import CodeBlock from '../components/CodeBlock.jsx';
+import LinkedListVisual from '../components/LinkedListVisual.jsx';
 import { useProgress } from '../lib/progress.js';
 import { runTests } from '../lib/runner.js';
 import { dedent } from '../lib/Markdown.jsx';
@@ -104,6 +105,14 @@ export default function DsaQuestion() {
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-400">Problem</h2>
           <Markdown>{q.statement}</Markdown>
         </Card>
+
+        {q.visual && (
+          <Card className="p-6">
+            <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-400">Step-by-step visual</h2>
+            {q.visual.title && <p className="mb-3 text-sm text-slate-500">{q.visual.title}</p>}
+            <LinkedListVisual visual={q.visual} uid={uid} />
+          </Card>
+        )}
 
         <Card className="p-6">
           <div className="mb-4 flex flex-wrap gap-2">

@@ -14,6 +14,7 @@ const rows = [
   [19, 'remove-nth-node-from-end-of-list', 'Remove Nth Node From End of List', 'Medium', 'AC'],
   [20, 'valid-parentheses', 'Valid Parentheses', 'Easy', 'AC'],
   [21, 'merge-two-sorted-lists', 'Merge Two Sorted Lists', 'Easy', 'AC'],
+  [24, 'swap-nodes-in-pairs', 'Swap Nodes in Pairs', 'Medium', 'AC'],
   [26, 'remove-duplicates-from-sorted-array', 'Remove Duplicates from Sorted Array', 'Easy', 'AC'],
   [27, 'remove-element', 'Remove Element', 'Easy', 'AC'],
   [28, 'find-the-index-of-the-first-occurrence-in-a-string', 'Find the Index of the First Occurrence in a String', 'Easy', 'AC'],
