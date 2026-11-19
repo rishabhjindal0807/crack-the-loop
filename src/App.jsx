@@ -7,11 +7,14 @@ import DsaQuestion from './pages/DsaQuestion.jsx';
 import QnaSection from './pages/QnaSection.jsx';
 import Starred from './pages/Starred.jsx';
 import LeetCode from './pages/LeetCode.jsx';
+import Classes from './pages/Classes.jsx';
+import ClassDetail from './pages/ClassDetail.jsx';
 import { sections } from './data/sections.js';
 import { links } from './data/profile.js';
 
 const nav = [
   { to: '/dsa', label: 'DSA' },
+  { to: '/classes', label: 'Classes' },
   { to: '/ui', label: 'UI / Frontend' },
   { to: '/ai', label: 'Agentic AI' },
   { to: '/backend', label: 'Backend' },
@@ -116,6 +119,8 @@ export default function App() {
           ))}
           <Route path="/starred" element={<Starred />} />
           <Route path="/leetcode" element={<LeetCode />} />
+          <Route path="/classes" element={<Classes />} />
+          <Route path="/classes/:classId" element={<ClassDetail />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>

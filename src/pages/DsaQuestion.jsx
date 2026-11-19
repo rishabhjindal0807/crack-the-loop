@@ -11,6 +11,7 @@ import { dedent } from '../lib/Markdown.jsx';
 import { Badge, Card, DoneToggle, LcBadge, StarToggle, diffColor } from '../components/ui.jsx';
 import { lcStatus } from '../data/leetcode.js';
 import { lcUrl } from './DsaTopic.jsx';
+import { classOfQuestion, classById } from '../data/classes.js';
 
 const fmt = (v) => {
   const s = typeof v === 'string' ? v : JSON.stringify(v);
@@ -80,7 +81,11 @@ export default function DsaQuestion() {
           <StarToggle on={p.isStarred(uid)} onClick={() => p.toggleStar(uid)} />
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          {q.from && <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">📒 {q.from}</Badge>}
+          {q.from && (classById[classOfQuestion(q)] ? (
+            <Link to={`/classes/${classOfQuestion(q)}`} title="Open this class">
+              <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-300">📒 {q.from} →</Badge>
+            </Link>
+          ) : <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">📒 {q.from}</Badge>)}
           {(q.tags || []).map((tg) => (
             <Badge key={tg} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">#{tg}</Badge>
           ))}

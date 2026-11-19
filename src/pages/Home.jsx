@@ -7,6 +7,7 @@ import { useProgress } from '../lib/progress.js';
 import { Card, ProgressBar, Badge, diffColor } from '../components/ui.jsx';
 import { dedent } from '../lib/Markdown.jsx';
 import { lcSubmissions } from '../data/leetcode.js';
+import { classById, current, allClasses } from '../data/classes.js';
 
 export default function Home() {
   const p = useProgress();
@@ -43,6 +44,21 @@ export default function Home() {
           <a className="rounded-lg bg-white/15 px-3 py-1.5 hover:bg-white/25" href={links.bosscoder} target="_blank" rel="noreferrer">Bosscoder curriculum ↗</a>
         </div>
       </section>
+
+      <Link to="/classes" className="group block">
+        <Card className="flex flex-wrap items-center justify-between gap-4 border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 p-5 transition group-hover:shadow-md dark:border-indigo-500/30 dark:from-indigo-500/10 dark:to-violet-500/5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">📍 Bosscoder class you're on</p>
+            <p className="mt-1 text-lg font-semibold">
+              {classById[current].code} · {classById[current].title}
+              <span className="ml-2 text-sm font-normal text-slate-500">
+                {p.doneCount(classById[current].problems.map((q) => q.uid))}/{classById[current].problems.length} done
+              </span>
+            </p>
+          </div>
+          <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">All {allClasses.length} classes, class-wise →</span>
+        </Card>
+      </Link>
 
       <Link to="/leetcode" className="group block">
         <Card className="flex flex-wrap items-center justify-between gap-4 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-5 transition group-hover:shadow-md dark:border-orange-500/30 dark:from-orange-500/10 dark:to-amber-500/5">
