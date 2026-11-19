@@ -20,6 +20,9 @@ const PTR_COLORS = {
   odd: '#6366f1',
   even: '#10b981',
   evenHead: '#64748b',
+  secondlist: '#10b981',
+  temp: '#64748b',
+  next: '#94a3b8',
 };
 
 function Arrow({ x1, x2, y, kind, highlight, id, depth = 64, color = highlight ? '#f97316' : '#94a3b8' }) {

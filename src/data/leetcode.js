@@ -41,6 +41,7 @@ const rows = [
   [136, 'single-number', 'Single Number', 'Easy', 'AC'],
   [137, 'single-number-ii', 'Single Number II', 'Medium', 'AC'],
   [142, 'linked-list-cycle-ii', 'Linked List Cycle II', 'Medium', 'AC'],
+  [143, 'reorder-list', 'Reorder List', 'Medium', 'AC'],
   [146, 'lru-cache', 'LRU Cache', 'Medium', 'AC'],
   [153, 'find-minimum-in-rotated-sorted-array', 'Find Minimum in Rotated Sorted Array', 'Medium', 'AC'],
   [162, 'find-peak-element', 'Find Peak Element', 'Medium', 'AC'],

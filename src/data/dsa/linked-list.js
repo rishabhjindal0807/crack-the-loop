@@ -627,14 +627,80 @@ Each round re-links two nodes and moves both pointers two positions on, so there
     },
     {
       id: 'reorder-list',
-      title: 'Reorder List (L0 → Ln → L1 → Ln−1 …)',
+      title: 'Reorder List',
       difficulty: 'Medium',
       lc: 'reorder-list',
+      from: 'IL9 – Linked List',
       tags: ['fast-slow', 'reversal', 'merge'],
-      statement: 'Reorder in place to `L0 → Ln → L1 → Ln−1 → …`.',
+      statement: 'Given the head of a singly linked list `L0 → L1 → … → Ln−1 → Ln`, reorder it **in place** to `L0 → Ln → L1 → Ln−1 → L2 → Ln−2 → …`. You may not change the values, only the links.\n\n**Example:** `1→2→3→4` → `1→4→2→3`, `1→2→3→4→5` → `1→5→2→4→3`',
+      visual: {
+        title: 'Middle → reverse → weave on 1 → 2 → 3 → 4 → 5',
+        groups: [
+          { label: 'first half (1, 2, 3)', nodes: ['1', '2', '3'], color: '#6366f1' },
+          { label: 'second half (4, 5)', nodes: ['4', '5'], color: '#10b981' },
+        ],
+        steps: [
+          { order: ['1', '2', '3', '4', '5', 'null'], edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: '1', fast: '1' },
+            code: 'let slow = head, fast = head', caption: 'Phase 1 — find the middle. slow moves 1 step, fast moves 2.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: '2', fast: '3' },
+            code: 'slow = slow.next; fast = fast.next.next', caption: 'One round.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { slow: '3', fast: '5' },
+            code: 'fast.next == null → stop', caption: 'fast is on the last node, so slow (3) is the middle. The first half is 1 → 2 → 3.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['4', '5'], ['5', 'null']], changed: [['3', 'null']], pointers: { slow: '3', secondlist: '4' },
+            code: 'secondlist = slow.next; slow.next = null', caption: 'Cut the list in two: 1 → 2 → 3 and 4 → 5.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['4', '5'], ['5', 'null']], pointers: { prev: 'null', curr: '4' },
+            code: 'prev = null; curr = secondlist', caption: 'Phase 2 — reverse the second half, one link at a time.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['4', 'null'], ['5', 'null']], changed: [['4', 'null']], pointers: { curr: '4', next: '5', prev: 'null' },
+            code: 'next = curr.next; curr.next = prev', caption: 'Save 5 in next, then point 4 backwards (to null — it will be the new tail).' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['4', 'null'], ['5', 'null']], pointers: { prev: '4', curr: '5' },
+            code: 'prev = curr; curr = next', caption: 'Step forward.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['4', 'null'], ['5', '4']], changed: [['5', '4']], pointers: { prev: '4', curr: '5', next: 'null' },
+            code: 'next = curr.next; curr.next = prev', caption: '5 now points back at 4.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['4', 'null'], ['5', '4']], pointers: { prev: '5', curr: 'null' },
+            code: 'prev = curr; curr = next → curr is null, stop', caption: 'Second half reversed: 5 → 4 → null, and prev is its head.' },
+          { order: ['1', '2', '3', '5', '4', 'null'], edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['5', '4'], ['4', 'null']], pointers: { ptr1: '1', ptr2: '5' },
+            code: 'ptr1 = head; ptr2 = prev', caption: 'Redrawn side by side: 1 → 2 → 3 and 5 → 4. Phase 3 — weave, one node from each list.' },
+          { edges: [['1', '2'], ['2', '3'], ['3', 'null'], ['5', '2'], ['4', 'null']], changed: [['5', '2']], pointers: { ptr1: '1', ptr2: '5', temp: '4' },
+            code: 'temp = ptr2.next; ptr2.next = ptr1.next', caption: 'temp saves 4 so the rest of the second list isn’t lost. 5 now points at 2 (what came after 1).' },
+          { edges: [['1', '5'], ['2', '3'], ['3', 'null'], ['5', '2'], ['4', 'null']], changed: [['1', '5']], pointers: { ptr1: '1', ptr2: '5', temp: '4' },
+            code: 'ptr1.next = ptr2', caption: '1 → 5 → 2: node 5 is spliced in after 1.' },
+          { edges: [['1', '5'], ['2', '3'], ['3', 'null'], ['5', '2'], ['4', 'null']], pointers: { ptr1: '2', ptr2: '4' },
+            code: 'ptr1 = ptr2.next; ptr2 = temp', caption: 'Move on to the next pair: 2 and 4.' },
+          { edges: [['1', '5'], ['2', '3'], ['3', 'null'], ['5', '2'], ['4', '3']], changed: [['4', '3']], pointers: { ptr1: '2', ptr2: '4', temp: 'null' },
+            code: 'temp = ptr2.next; ptr2.next = ptr1.next', caption: '4 points at 3 (what came after 2).' },
+          { edges: [['1', '5'], ['2', '4'], ['3', 'null'], ['5', '2'], ['4', '3']], changed: [['2', '4']], pointers: { ptr1: '2', ptr2: '4', temp: 'null' },
+            code: 'ptr1.next = ptr2', caption: '2 → 4 → 3: node 4 is spliced in after 2.' },
+          { edges: [['1', '5'], ['2', '4'], ['3', 'null'], ['5', '2'], ['4', '3']], pointers: { ptr1: '3', ptr2: 'null' },
+            code: 'ptr1 = ptr2.next; ptr2 = temp → ptr2 is null, stop', caption: 'The second list is used up. Node 3 was already at the end of the first half, so it stays last.' },
+          { order: ['1', '5', '2', '4', '3', 'null'], edges: [['1', '5'], ['5', '2'], ['2', '4'], ['4', '3'], ['3', 'null']], pointers: {},
+            code: 'done — head is reordered in place', caption: 'L0 → L4 → L1 → L3 → L2, i.e. 1 → 5 → 2 → 4 → 3. Three O(n) passes, O(1) extra space.' },
+        ],
+      },
       approaches: [
         {
-          name: 'Middle → reverse second half → weave',
+          name: 'Array of nodes + two pointers (O(n) space)',
+          time: 'O(n)',
+          space: 'O(n)',
+          idea: 'Copy the node references into an array, then link `arr[i] → arr[j] → arr[i+1] …` moving i forward and j backward. Simple, but uses O(n) extra space — say it first, then improve.',
+          code: `
+            function reorderList(head) {
+              const nodes = [];
+              for (let p = head; p; p = p.next) nodes.push(p);
+              let i = 0, j = nodes.length - 1;
+              while (i < j) {
+                nodes[i].next = nodes[j];
+                i++;
+                if (i === j) break;
+                nodes[j].next = nodes[i];
+                j--;
+              }
+              if (nodes.length) nodes[i].next = null;
+              return head;
+            }
+          `,
+        },
+        {
+          name: 'Reference (middle via fast.next.next)',
           time: 'O(n)',
           space: 'O(1)',
           idea: 'Combines three linked-list primitives — a favourite because it tests all of them at once.',
@@ -656,13 +722,122 @@ Each round re-links two nodes and moves both pointers two positions on, so there
             }
           `,
         },
+        {
+          name: 'Your accepted solution (LeetCode)',
+          time: 'O(n)',
+          space: 'O(1)',
+          idea: `
+            Three linked-list basics in a row: **find the middle** with slow/fast, **reverse** the second half, then **weave** the
+            two halves — splice one node of the reversed half after each node of the first half. Step through the visual above.
+          `,
+          code: `
+            var reorderList = function (head) {
+              let slow = head, fast = head;
+
+              while (fast != null && fast.next != null) {
+                slow = slow.next;
+                fast = fast.next.next;
+              }
+              let secondlist = slow.next;
+              slow.next = null;
+              let prev = null;
+              let curr = secondlist;
+
+              while (curr != null) {
+                let next = curr.next;  // Save next node
+                curr.next = prev;      // Reverse the link
+                prev = curr;           // Move prev forward
+                curr = next;           // Move curr forward
+              }
+
+              // merge the lists
+              let ptr1 = head;
+              let ptr2 = prev;
+
+              while (ptr1 != null && ptr2 != null) {
+                let temp = ptr2.next;
+                ptr2.next = ptr1.next;
+                ptr1.next = ptr2;
+                ptr1 = ptr2.next;
+                ptr2 = temp;
+              }
+
+              return head;
+            };
+          `,
+        },
       ],
+      math: {
+        body: `
+Index the nodes $L_0, L_1, \\dots, L_{n-1}$. The target order alternates front and back:
+
+$$T = L_0,\\; L_{n-1},\\; L_1,\\; L_{n-2},\\; L_2,\\; \\dots \\qquad\\text{i.e.}\\qquad T_{2i} = L_i,\\quad T_{2i+1} = L_{n-1-i}$$
+
+#### Phase 1 — where slow stops
+
+Your loop runs while \`fast\` and \`fast.next\` exist. After $s$ rounds slow is at $L_s$ and fast at $L_{2s}$, so it stops at the first $s$ with $2s \\ge n-1$:
+
+$$s = \\left\\lfloor \\tfrac{n}{2} \\right\\rfloor$$
+
+So the first half is $A = L_0 \\dots L_{\\lfloor n/2 \\rfloor}$ with $m = \\lfloor n/2 \\rfloor + 1$ nodes, and the second half has $k = n - m = \\lceil n/2 \\rceil - 1$ nodes.
+
+| $n$ | slow stops at | first half $A$ | second half | $m - k$ |
+|:-:|:-:|:-:|:-:|:-:|
+| 4 | $L_2$ | $L_0, L_1, L_2$ | $L_3$ | 2 |
+| 5 | $L_2$ | $L_0, L_1, L_2$ | $L_3, L_4$ | 1 |
+
+In general $m - k = 2$ when $n$ is even and $1$ when $n$ is odd.
+
+#### Phase 2 — reversing
+
+Reversing the second half gives $B$ with $b_j = L_{n-1-j}$ for $j = 0, \\dots, k-1$: the back of the list, read from the end. (Each node is re-pointed once — $O(k)$.)
+
+#### Phase 3 — the weave
+
+Each round splices one node of $B$ after the current node of $A$, so after the loop (which stops when $B$ runs out) the list is
+
+$$a_0,\\, b_0,\\, a_1,\\, b_1,\\, \\dots,\\, a_{k-1},\\, b_{k-1},\\; \\underbrace{a_k, \\dots, a_{m-1}}_{\\text{left-over tail of } A}$$
+
+Substitute $a_i = L_i$ and $b_i = L_{n-1-i}$: the first $2k$ entries are exactly $T_0 \\dots T_{2k-1}$ ✓.
+
+What's left of the target is $T_{2k} = L_k$ and then $T_{2k+1} = L_{n-1-k} = L_{m-1}$. The left-over tail is $L_k, \\dots, L_{m-1}$, which matches **exactly when it has at most 2 nodes**:
+
+$$0 \\;\\le\\; m - k \\;\\le\\; 2$$
+
+Your split has $m - k \\in \\{1, 2\\}$ ✓ — so the result is always the target order.
+
+#### Why the other middle also works
+
+The reference approach stops when \`fast.next.next\` is null, giving $s = \\lfloor (n-1)/2 \\rfloor$ and $m - k \\in \\{0, 1\\}$. Also inside $[0, 2]$, so it is correct too — the two versions just put the middle node in different halves.
+A split with $m - k = 3$ (or more) would leave a tail like $L_k, L_{k+1}, L_{k+2}$ in the wrong order.
+
+#### Complexity
+
+Phase 1 takes $\\lfloor n/2 \\rfloor$ rounds, phase 2 $k$ rounds and phase 3 $k$ rounds — $O(n)$ time in total. Only a handful of pointers are used, so extra space is $O(1)$.
+`,
+      },
+      explanation: `
+        **Don't forget \`slow.next = null\`.** Without the cut, the first half still runs into the second half and the weave creates a cycle.
+
+        **Save before you re-link:** \`next\` in the reversal and \`temp\` in the weave each hold the only reference to the rest of a list.
+
+        **Return value:** LeetCode wants \`void\` — the list is changed in place, so returning \`head\` is harmless but not needed.
+        Your code assumes at least one node (LeetCode guarantees it); for an empty list \`slow.next\` would throw, so add
+        \`if (!head) return;\` if an interviewer asks about it.
+
+        **Why interviewers like it:** it checks three basics at once — middle of a list (LC 876), reverse a list (LC 206) and
+        merging two lists. If you can write those three cleanly, this one is just gluing them together.
+      `,
       fn: 'reorderList',
       input: list,
-      output: toArr,
+      output: (_r, H, args) => H.arr(args[0]), // in place: read the list from the original head
       tests: [
         { args: [[1, 2, 3, 4]], expected: [1, 4, 2, 3] },
         { args: [[1, 2, 3, 4, 5]], expected: [1, 5, 2, 4, 3] },
+        { args: [[1, 2, 3, 4, 5, 6]], expected: [1, 6, 2, 5, 3, 4] },
+        { args: [[1, 2, 3]], expected: [1, 3, 2] },
+        { args: [[1, 2]], expected: [1, 2] },
+        { args: [[1]], expected: [1] },
       ],
     },
     {
