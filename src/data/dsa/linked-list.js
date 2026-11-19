@@ -484,6 +484,148 @@ With speeds 2 and 1 the gap closes by 1 per step, so it can't skip past 0. With 
       ],
     },
     {
+      id: 'odd-even-linked-list',
+      title: 'Odd Even Linked List',
+      difficulty: 'Medium',
+      lc: 'odd-even-linked-list',
+      from: 'IL9 – Linked List',
+      tags: ['pointer-manipulation', 'two-chains'],
+      statement: 'Given the `head` of a singly linked list, group all nodes at **odd positions** together followed by the nodes at **even positions**, and return the reordered list. The first node is odd, the second even, and so on. Keep the relative order inside each group.\n\nYou must use **O(1)** extra space and **O(n)** time.\n\n**Example:** `1→2→3→4→5` → `1→3→5→2→4`, `2→1→3→5→6→4→7` → `2→3→6→7→1→5→4`',
+      visual: {
+        title: 'Split into odd and even chains on 1 → 2 → 3 → 4 → 5',
+        groups: [
+          { label: 'odd chain (1, 3, 5)', nodes: ['1', '3', '5'], color: '#6366f1' },
+          { label: 'even chain (2, 4)', nodes: ['2', '4'], color: '#10b981' },
+        ],
+        steps: [
+          { order: ['1', '2', '3', '4', '5', 'null'], edges: [['1', '2'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { odd: '1', even: '2', evenHead: '2' },
+            code: 'odd = head; even = head.next; evenHead = even', caption: 'odd walks the 1st, 3rd, 5th… nodes and even walks the 2nd, 4th… evenHead remembers where the even chain starts, so we can attach it at the end.' },
+          { edges: [['1', '3'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], changed: [['1', '3']], pointers: { odd: '1', even: '2', evenHead: '2' },
+            code: 'odd.next = even.next', caption: 'Odd node 1 skips over 2 and links to the next odd node, 3.' },
+          { edges: [['1', '3'], ['2', '3'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { odd: '3', even: '2', evenHead: '2' },
+            code: 'odd = odd.next', caption: 'Move odd forward to 3.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '4'], ['4', '5'], ['5', 'null']], changed: [['2', '4']], pointers: { odd: '3', even: '2', evenHead: '2' },
+            code: 'even.next = odd.next', caption: 'Even node 2 skips over 3 and links to the next even node, 4.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '4'], ['4', '5'], ['5', 'null']], pointers: { odd: '3', even: '4', evenHead: '2' },
+            code: 'even = even.next', caption: 'Move even forward to 4. One round done: 1 → 3 and 2 → 4.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '5'], ['4', '5'], ['5', 'null']], changed: [['3', '5']], pointers: { odd: '3', even: '4', evenHead: '2' },
+            code: 'odd.next = even.next', caption: 'Same moves again: 3 skips 4 and links to 5.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '5'], ['4', '5'], ['5', 'null']], pointers: { odd: '5', even: '4', evenHead: '2' },
+            code: 'odd = odd.next', caption: 'odd moves to 5.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '5'], ['4', 'null'], ['5', 'null']], changed: [['4', 'null']], pointers: { odd: '5', even: '4', evenHead: '2' },
+            code: 'even.next = odd.next', caption: '4 skips 5 — and 5’s next is null, so the even chain now ends at 4.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '5'], ['4', 'null'], ['5', 'null']], pointers: { odd: '5', even: 'null', evenHead: '2' },
+            code: 'even = even.next → even is null, loop stops', caption: 'Two separate chains now: odd 1 → 3 → 5 and even 2 → 4 → null.' },
+          { edges: [['1', '3'], ['2', '4'], ['3', '5'], ['4', 'null'], ['5', '2']], changed: [['5', '2']], pointers: { odd: '5', evenHead: '2' },
+            code: 'odd.next = evenHead', caption: 'Attach the even chain after the last odd node. This is why we saved evenHead.' },
+          { order: ['1', '3', '5', '2', '4', 'null'], edges: [['1', '3'], ['3', '5'], ['5', '2'], ['2', '4'], ['4', 'null']], pointers: {},
+            code: 'return head', caption: 'Result: 1 → 3 → 5 → 2 → 4. Each node was re-linked once — O(n) time, O(1) extra space, values never touched.' },
+        ],
+      },
+      approaches: [
+        {
+          name: 'Collect nodes in two arrays (O(n) space)',
+          time: 'O(n)',
+          space: 'O(n)',
+          idea: 'Put odd-position nodes in one array and even-position nodes in another, then re-link them in order. Easy to get right, but breaks the O(1)-space rule — a good starting point to mention before the optimal answer.',
+          code: `
+            function oddEvenList(head) {
+              const odds = [], evens = [];
+              let i = 1;
+              for (let p = head; p; p = p.next, i++) (i % 2 ? odds : evens).push(p);
+              const all = [...odds, ...evens];
+              for (let k = 0; k < all.length; k++) all[k].next = all[k + 1] || null;
+              return all[0] || null;
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (two chains, LeetCode)',
+          time: 'O(n)',
+          space: 'O(1)',
+          idea: `
+            Build the odd chain and the even chain in place. Each round: \`odd\` skips one node to the next odd node, then \`even\`
+            skips one node to the next even node. Save \`evenHead\` at the start so the even chain can be attached after the last odd node.
+          `,
+          code: `
+            var oddEvenList = function (head) {
+              if (head == null || head.next == null) return head;
+              let odd = head;
+              let even = head.next;
+              let evenHead = even;
+
+              while (even != null && even.next != null) {
+                odd.next = even.next;
+                odd = odd.next;
+
+                even.next = odd.next;
+                even = even.next;
+              }
+              odd.next = evenHead;
+              return head;
+            };
+          `,
+        },
+      ],
+      math: {
+        body: `
+Number the nodes by position $1, 2, \\dots, n$. Odd positions should come first, then even positions, each group in its original order.
+
+#### Loop invariant
+
+At the start of round $i$ (counting from $i = 1$), with $o$ = **odd** and $e$ = **even**:
+
+$$o = \\text{node } 2i-1, \\qquad e = \\text{node } 2i$$
+
+$$\\text{odd chain: } 1 \\to 3 \\to \\cdots \\to 2i-1, \\qquad \\text{even chain: } 2 \\to 4 \\to \\cdots \\to 2i$$
+
+and $e.\\text{next}$ still points at node $2i+1$ — the untouched rest of the list.
+
+- **It holds at the start** ($i = 1$): odd $= 1$, even $= 2$, and $2.\\text{next} = 3$.
+- **One round keeps it true:** \`odd.next = even.next\` links $2i-1 \\to 2i+1$; then \`even.next = odd.next\` links $2i \\to 2i+2$. Moving both pointers gives $o = 2(i+1)-1$ and $e = 2(i+1)$, and node $2i+2$'s next is still the original node $2i+3$.
+
+#### When the loop stops
+
+The loop runs while $e \\ne \\text{null}$ and $e.\\text{next} \\ne \\text{null}$, i.e. while node $2i+1$ exists.
+
+| list length $n$ | loop stops because | odd ends at | even ends at |
+|:-:|:-:|:-:|:-:|
+| odd, $n = 2m+1$ | $e = \\text{null}$ | node $n$ | node $n-1$ → null |
+| even, $n = 2m$ | $e.\\text{next} = \\text{null}$ | node $n-1$ | node $n$ → null |
+
+Either way **odd** is the last odd-position node and the even chain already ends in null, so one more link finishes it:
+
+$$\\underbrace{1 \\to 3 \\to \\cdots}_{\\text{odd positions}} \\;\\to\\; \\underbrace{2 \\to 4 \\to \\cdots \\to \\text{null}}_{\\text{even positions}} \\qquad (\\texttt{odd.next = evenHead})$$
+
+#### Complexity
+
+Each round re-links two nodes and moves both pointers two positions on, so there are about $\\lfloor (n-1)/2 \\rfloor$ rounds — $O(n)$ time. Only the three pointers **odd**, **even** and **evenHead** are extra, so space is $O(1)$.
+`,
+      },
+      explanation: `
+        **The two lines are symmetric:** \`odd.next = even.next\` then \`even.next = odd.next\` — each pointer jumps over the other one.
+        Update \`odd\` *before* using \`odd.next\` for even, otherwise even would point at the wrong node.
+
+        **Why the loop checks \`even\` (not \`odd\`):** \`even\` is always one ahead, so if \`even\` or \`even.next\` is null there is no next odd node to link.
+        Checking only \`odd.next\` would crash on even-length lists.
+
+        **Common mistakes:** forgetting \`evenHead\` (the start of the even chain is lost after the first round), or grouping by *value* parity instead of *position*.
+
+        **Same pattern:** Partition List (LC 86) and splitting a list in two both build two chains with their own tails, then join them.
+      `,
+      fn: 'oddEvenList',
+      input: list,
+      output: toArr,
+      tests: [
+        { args: [[1, 2, 3, 4, 5]], expected: [1, 3, 5, 2, 4] },
+        { args: [[2, 1, 3, 5, 6, 4, 7]], expected: [2, 3, 6, 7, 1, 5, 4], label: 'groups by position, not value' },
+        { args: [[1, 2, 3, 4]], expected: [1, 3, 2, 4], label: 'even length' },
+        { args: [[1, 2]], expected: [1, 2] },
+        { args: [[1]], expected: [1] },
+        { args: [[]], expected: [] },
+      ],
+    },
+    {
       id: 'reorder-list',
       title: 'Reorder List (L0 → Ln → L1 → Ln−1 …)',
       difficulty: 'Medium',

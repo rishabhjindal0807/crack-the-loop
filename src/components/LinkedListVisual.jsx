@@ -17,11 +17,13 @@ const PTR_COLORS = {
   head: '#64748b',
   ptr1: '#0ea5e9',
   ptr2: '#10b981',
+  odd: '#6366f1',
+  even: '#10b981',
+  evenHead: '#64748b',
 };
 
-function Arrow({ x1, x2, y, kind, highlight, id, depth = 64 }) {
-  const color = highlight ? '#f97316' : '#94a3b8';
-  const marker = `url(#${highlight ? 'arrowHi' : 'arrow'}-${id})`;
+function Arrow({ x1, x2, y, kind, highlight, id, depth = 64, color = highlight ? '#f97316' : '#94a3b8' }) {
+  const marker = `url(#m${color.slice(1)}-${id})`;
   const sw = highlight ? 2.5 : 1.6;
   if (kind === 'straight') {
     return <line x1={x1 + BOX.w / 2} y1={y} x2={x2 - BOX.w / 2 - 4} y2={y} stroke={color} strokeWidth={sw} markerEnd={marker} />;
@@ -76,6 +78,15 @@ export default function LinkedListVisual({ visual, uid }) {
   const isChanged = (a, b) => (step.changed || []).some(([x, z]) => x === a && z === b);
   const id = uid.replace(/[^a-z0-9]/gi, '');
 
+  // optional colour groups, e.g. the odd chain and the even chain
+  const groups = visual.groups || [];
+  const groupOf = (n) => groups.find((g) => g.nodes.includes(n));
+  const edgeColor = (a, b) => {
+    if (isChanged(a, b)) return '#f97316';
+    const g = groupOf(a);
+    return g && (b === 'null' || groupOf(b) === g) ? g.color : '#94a3b8';
+  };
+
   // group pointer labels by node
   const labels = {};
   for (const [name, node] of Object.entries(step.pointers || {})) (labels[node] ||= []).push(name);
@@ -85,8 +96,8 @@ export default function LinkedListVisual({ visual, uid }) {
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
         <svg viewBox={`0 0 ${width} 190`} className="min-w-[560px]" role="img" aria-label={step.caption}>
           <defs>
-            {[['arrow', '#94a3b8'], ['arrowHi', '#f97316']].map(([n, c]) => (
-              <marker key={n} id={`${n}-${id}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            {['#94a3b8', '#f97316', ...groups.map((g) => g.color)].map((c) => (
+              <marker key={c} id={`m${c.slice(1)}-${id}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill={c} />
               </marker>
             ))}
@@ -95,7 +106,7 @@ export default function LinkedListVisual({ visual, uid }) {
           {step.edges.map(([a, b]) => {
             const d = idx[b] - idx[a];
             const kind = d === 1 ? 'straight' : d > 1 ? 'forward' : 'backward';
-            return <Arrow key={`${a}-${b}`} x1={pos[a]} x2={pos[b]} y={y} kind={kind} highlight={isChanged(a, b)} id={id} depth={backDepth} />;
+            return <Arrow key={`${a}-${b}`} x1={pos[a]} x2={pos[b]} y={y} kind={kind} highlight={isChanged(a, b)} color={edgeColor(a, b)} id={id} depth={backDepth} />;
           })}
 
           {order.map((n) => (
@@ -113,7 +124,8 @@ export default function LinkedListVisual({ visual, uid }) {
                     height={BOX.h}
                     rx="8"
                     className={n === 'D' ? 'fill-slate-200 stroke-slate-400 dark:fill-slate-800' : 'fill-white stroke-indigo-400 dark:fill-slate-900'}
-                    strokeWidth="1.6"
+                    strokeWidth={groupOf(n) ? 2.4 : 1.6}
+                    style={groupOf(n) ? { stroke: groupOf(n).color } : undefined}
                     strokeDasharray={n === 'D' ? '4 3' : undefined}
                   />
                   <text textAnchor="middle" dy={n === 'D' ? 4 : 5} fontSize={n === 'D' ? 11 : 15} fontWeight="600" className="fill-slate-700 dark:fill-slate-200">
@@ -133,6 +145,17 @@ export default function LinkedListVisual({ visual, uid }) {
           ))}
         </svg>
       </div>
+
+      {groups.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
+          {groups.map((g) => (
+            <span key={g.label} className="flex items-center gap-1.5">
+              <span className="inline-block h-0.5 w-5 rounded" style={{ background: g.color }} /> {g.label}
+            </span>
+          ))}
+          <span className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 rounded bg-orange-500" /> link changed in this step</span>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <div className="flex gap-1.5">

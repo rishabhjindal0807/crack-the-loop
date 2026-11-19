@@ -58,6 +58,7 @@ const rows = [
   [303, 'range-sum-query-immutable', 'Range Sum Query - Immutable', 'Easy', 'AC'],
   [304, 'range-sum-query-2d-immutable', 'Range Sum Query 2D - Immutable', 'Medium', 'AC'],
   [326, 'power-of-three', 'Power of Three', 'Easy', 'AC'],
+  [328, 'odd-even-linked-list', 'Odd Even Linked List', 'Medium', 'AC'],
   [450, 'delete-node-in-a-bst', 'Delete Node in a BST', 'Medium', 'AC'],
   [455, 'assign-cookies', 'Assign Cookies', 'Easy', 'AC'],
   [470, 'implement-rand10-using-rand7', 'Implement Rand10() Using Rand7()', 'Medium', 'AC'],
