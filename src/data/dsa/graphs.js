@@ -133,6 +133,232 @@ One pass over the $T$ trust pairs and one pass over the $n$ people: $O(n + T)$ t
       ],
     },
     {
+      id: 'find-if-path-exists',
+      title: 'Find if Path Exists in Graph',
+      difficulty: 'Easy',
+      lc: 'find-if-path-exists-in-graph',
+      from: 'Lec 21 – Graph',
+      tags: ['bfs', 'dfs', 'union-find', 'adjacency-list'],
+      statement: 'A bi-directional graph has `n` vertices labelled `0` to `n − 1`. `edges[i] = [u, v]` is an edge between `u` and `v` (no duplicates, no self-loops). Return `true` if there is a path from `source` to `destination`.\n\n**Examples:** `n = 3, edges = [[0,1],[1,2],[2,0]], source = 0, destination = 2` → `true` · `n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5` → `false`',
+      visual: {"type": "graph", "title": "BFS from 0, looking for 4", "nodes": {"0": [70, 150], "1": [185, 65], "2": [185, 235], "3": [300, 150], "4": [410, 150], "5": [505, 65], "6": [505, 235]}, "edges": [["0", "1"], ["0", "2"], ["1", "3"], ["2", "3"], ["3", "4"], ["5", "6"]], "labels": {"0": "source", "4": "destination"}, "listLabel": "queue", "steps": [{"seen": [], "done": [], "list": [], "front": 0, "tree": [], "code": "graph[u].push(v); graph[v].push(u)", "caption": "The graph as an adjacency list: 0→[1,2], 1→[0,3], 2→[0,3], 3→[1,2,4], 4→[3], 5→[6], 6→[5]. Each edge is stored both ways because the graph is bi-directional. Notice 5–6 is a separate piece."}, {"seen": ["0"], "done": [], "list": ["0"], "front": 0, "tree": [], "code": "queue.push(source); visited[source] = true", "caption": "Start at the source, 0. Mark it visited as soon as it goes into the queue."}, {"seen": ["0", "1", "2"], "done": [], "current": "0", "list": ["0", "1", "2"], "front": 1, "tree": [["0", "1"], ["0", "2"]], "hot": [["0", "1"], ["0", "2"]], "code": "node = queue[front++]  // 0", "caption": "Take 0 from the front of the queue. It is not the destination. Neighbours: add 1, 2 to the queue and mark them visited."}, {"seen": ["0", "1", "2", "3"], "done": ["0"], "current": "1", "list": ["0", "1", "2", "3"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["1", "0"], ["1", "3"]], "code": "node = queue[front++]  // 1", "caption": "Take 1 from the front of the queue. It is not the destination. Neighbours: add 3 to the queue and mark it visited; skip 0 (already visited)."}, {"seen": ["0", "1", "2", "3"], "done": ["0", "1"], "current": "2", "list": ["0", "1", "2", "3"], "front": 3, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["2", "0"], ["2", "3"]], "code": "node = queue[front++]  // 2", "caption": "Take 2 from the front of the queue. It is not the destination. Neighbours: skip 0, 3 (already visited). 3 was marked visited when 1 added it, so it isn't added a second time. That is why we mark on push, not on pop."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2"], "current": "3", "list": ["0", "1", "2", "3", "4"], "front": 4, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["3", "1"], ["3", "2"], ["3", "4"]], "code": "node = queue[front++]  // 3", "caption": "Take 3 from the front of the queue. It is not the destination. Neighbours: add 4 to the queue and mark it visited; skip 1, 2 (already visited)."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2", "3"], "current": "4", "list": ["0", "1", "2", "3", "4"], "front": 5, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "found": "4", "code": "node = queue[front++]  // 4;  node == destination → return true", "caption": "Took 4 from the queue, and it is the destination. Return true. BFS stopped early: 5 and 6 were never touched. (If the destination were 5, the queue would run empty and the answer would be false.)"}]},
+      approaches: [
+        {
+          name: 'DFS with a stack',
+          time: 'O(V + E)',
+          space: 'O(V + E)',
+          idea: 'Same idea as BFS, but take from the **end** of the list (a stack), so it goes deep first. For "is there a path?" the order doesn\'t matter; both work.',
+          code: `
+            function validPath(n, edges, source, destination) {
+              const graph = Array.from({ length: n }, () => []);
+              for (const [u, v] of edges) {
+                graph[u].push(v);
+                graph[v].push(u);
+              }
+              const visited = new Array(n).fill(false);
+              const stack = [source];
+              visited[source] = true;
+              while (stack.length) {
+                const node = stack.pop();
+                if (node === destination) return true;
+                for (const nb of graph[node]) {
+                  if (!visited[nb]) {
+                    visited[nb] = true;
+                    stack.push(nb);
+                  }
+                }
+              }
+              return false;
+            }
+          `,
+        },
+        {
+          name: 'Union-Find (no graph needed)',
+          time: 'O((V + E) · α(V))',
+          space: 'O(V)',
+          idea: 'Put both ends of every edge in the same group. At the end, a path exists exactly when `source` and `destination` are in the same group. Best when you get many "is there a path?" questions on the same graph.',
+          code: `
+            function validPath(n, edges, source, destination) {
+              const parent = Array.from({ length: n }, (_, i) => i);
+              const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+              for (const [u, v] of edges) parent[find(u)] = find(v);
+              return find(source) === find(destination);
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (BFS, LeetCode)',
+          time: 'O(V + E)',
+          space: 'O(V + E)',
+          idea: `
+            Build an adjacency list (both directions), then BFS from \`source\` with a \`visited\` array. You use an array plus a
+            \`front\` index instead of \`queue.shift()\`: \`shift()\` moves every element, so it costs O(n) each time. Step through the
+            visual above to watch the queue.
+          `,
+          code: `
+            var validPath = function (n, edges, source, destination) {
+              let graph = [];
+
+              for (let i = 0; i < n; i++) {
+                graph.push([]);
+              }
+
+              for (let i = 0; i < edges.length; i++) {
+                let u = edges[i][0];
+                let v = edges[i][1];
+                graph[u].push(v);
+                graph[v].push(u);
+              }
+              let visited = new Array(n).fill(false);
+              let queue = [];
+              let front = 0;
+
+              queue.push(source);
+              visited[source] = true;
+
+              while (front < queue.length) {
+                let node = queue[front++];
+                if (node == destination) {
+                  return true;
+                }
+                for (let neighbor of graph[node]) {
+                  if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    queue.push(neighbor);
+                  }
+                }
+              }
+
+              return false;
+            };
+          `,
+        },
+      ],
+      explanation: `
+        **Three habits from this problem that you'll use in every graph question:**
+        1. **Bi-directional means add the edge both ways:** \`graph[u].push(v)\` and \`graph[v].push(u)\`. Forgetting one is the most common bug.
+        2. **Mark visited when you push, not when you pop.** Otherwise the same node can be added to the queue many times (see step 5 of the visual).
+        3. **Use a \`front\` index instead of \`shift()\`.** \`shift()\` is O(n), which turns BFS into O(V²) on big graphs.
+
+        **Which approach when?** BFS and DFS answer one question in O(V + E). Union-Find shines when edges keep arriving or there
+        are many queries. BFS is also the one that gives the **shortest** path (fewest edges); DFS doesn't.
+
+        **Small extra:** you could return \`true\` straight away when \`source === destination\`, but your loop already handles it on the first pop.
+      `,
+      fn: 'validPath',
+      tests: [
+        { args: [3, [[0, 1], [1, 2], [2, 0]], 0, 2], expected: true },
+        { args: [6, [[0, 1], [0, 2], [3, 5], [5, 4], [4, 3]], 0, 5], expected: false, label: 'different pieces of the graph' },
+        { args: [7, [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [5, 6]], 0, 4], expected: true, label: 'the example in the visual' },
+        { args: [7, [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [5, 6]], 0, 6], expected: false },
+        { args: [1, [], 0, 0], expected: true, label: 'source is the destination' },
+        { args: [2, [], 0, 1], expected: false, label: 'no edges' },
+      ],
+    },
+    {
+      id: 'bfs-traversal',
+      title: 'BFS Traversal of a Graph (all components)',
+      difficulty: 'Easy',
+      lc: 'https://www.geeksforgeeks.org/problems/bfs-traversal-of-graph/1',
+      from: 'Lec 21 – Graph',
+      tags: ['bfs', 'traversal', 'connected-components'],
+      statement: 'Given a graph with `V` vertices (`0` to `V − 1`) as an adjacency list `graph`, return the **BFS order** of all vertices. Start from vertex 0, visit neighbours in the order they appear in the list, and if some vertices are not reachable, start a new BFS from the smallest unvisited vertex.\n\n**Example:** `graph = [[1,2],[0,3],[0,4],[1],[2]]` → `[0, 1, 2, 3, 4]`',
+      visual: {"type": "graph", "title": "BFS over every piece of the graph", "nodes": {"0": [70, 150], "1": [185, 65], "2": [185, 235], "3": [300, 150], "4": [410, 150], "5": [505, 65], "6": [505, 235]}, "edges": [["0", "1"], ["0", "2"], ["1", "3"], ["2", "3"], ["3", "4"], ["5", "6"]], "labels": {}, "listLabel": "queue", "steps": [{"seen": [], "done": [], "list": [], "front": 0, "tree": [], "code": "bfsTraversal(graph, 7)", "caption": "The graph as an adjacency list: 0→[1,2], 1→[0,3], 2→[0,3], 3→[1,2,4], 4→[3], 5→[6], 6→[5]. It has two separate pieces, 0–4 and 5–6, so one BFS from 0 would miss 5 and 6."}, {"seen": ["0"], "done": [], "list": ["0"], "front": 0, "tree": [], "code": "bfs(graph, 0, visited, result)", "caption": "i = 0 is not visited, so start a BFS from it. Mark 0 visited and put it in a new queue."}, {"seen": ["0", "1", "2"], "done": [], "current": "0", "list": ["0", "1", "2"], "front": 1, "tree": [["0", "1"], ["0", "2"]], "hot": [["0", "1"], ["0", "2"]], "code": "node = queue[front++]  // 0;  result.push(node)", "caption": "Take 0 from the front of the queue and add it to the result. Neighbours: add 1, 2 to the queue and mark them visited."}, {"seen": ["0", "1", "2", "3"], "done": ["0"], "current": "1", "list": ["0", "1", "2", "3"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["1", "0"], ["1", "3"]], "code": "node = queue[front++]  // 1;  result.push(node)", "caption": "Take 1 from the front of the queue and add it to the result. Neighbours: add 3 to the queue and mark it visited; skip 0 (already visited)."}, {"seen": ["0", "1", "2", "3"], "done": ["0", "1"], "current": "2", "list": ["0", "1", "2", "3"], "front": 3, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["2", "0"], ["2", "3"]], "code": "node = queue[front++]  // 2;  result.push(node)", "caption": "Take 2 from the front of the queue and add it to the result. Neighbours: skip 0, 3 (already visited). 3 was marked visited when 1 added it, so it isn't added a second time. That is why we mark on push, not on pop."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2"], "current": "3", "list": ["0", "1", "2", "3", "4"], "front": 4, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["3", "1"], ["3", "2"], ["3", "4"]], "code": "node = queue[front++]  // 3;  result.push(node)", "caption": "Take 3 from the front of the queue and add it to the result. Neighbours: add 4 to the queue and mark it visited; skip 1, 2 (already visited)."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2", "3"], "current": "4", "list": ["0", "1", "2", "3", "4"], "front": 5, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["4", "3"]], "code": "node = queue[front++]  // 4;  result.push(node)", "caption": "Take 4 from the front of the queue and add it to the result. Neighbours: skip 3 (already visited)."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["0", "1", "2", "3", "4"], "list": ["5"], "front": 0, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "code": "bfs(graph, 5, visited, result)", "caption": "Back in bfsTraversal, the loop goes i = 1, 2, 3, 4 (all visited, skipped), then i = 5: not visited. A new piece of the graph, so call bfs again from 5, with a new queue. The visited array is shared, so nothing is visited twice."}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4"], "current": "5", "list": ["5", "6"], "front": 1, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "hot": [["5", "6"]], "code": "node = queue[front++]  // 5;  result.push(node)", "caption": "Take 5 from the front of the queue and add it to the result. Neighbours: add 6 to the queue and mark it visited."}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4", "5"], "current": "6", "list": ["5", "6"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "hot": [["6", "5"]], "code": "node = queue[front++]  // 6;  result.push(node)", "caption": "Take 6 from the front of the queue and add it to the result. Neighbours: skip 5 (already visited)."}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4", "5", "6"], "list": ["5", "6"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "code": "return result  // [0, 1, 2, 3, 4, 5, 6]", "caption": "Every node visited exactly once, piece by piece. Total work is O(V + E): each node enters a queue once, and each edge is checked from both ends."}]},
+      approaches: [
+        {
+          name: 'Simple version with queue.shift()',
+          time: 'O(V² + E) worst case',
+          space: 'O(V)',
+          idea: 'The same BFS, but taking from the queue with `shift()`. Easy to read, but `shift()` moves every remaining element, so each removal costs O(V).',
+          code: `
+            function bfsTraversal(graph, V) {
+              const visited = new Array(V).fill(false);
+              const result = [];
+              for (let i = 0; i < V; i++) {
+                if (visited[i]) continue;
+                const queue = [i];
+                visited[i] = true;
+                while (queue.length) {
+                  const node = queue.shift();
+                  result.push(node);
+                  for (const nb of graph[node]) {
+                    if (!visited[nb]) {
+                      visited[nb] = true;
+                      queue.push(nb);
+                    }
+                  }
+                }
+              }
+              return result;
+            }
+          `,
+        },
+        {
+          name: 'Your solution (front pointer, every component)',
+          time: 'O(V + E)',
+          space: 'O(V)',
+          idea: `
+            \`bfs()\` visits one connected piece of the graph using a queue and a \`front\` index (O(1) per removal).
+            \`bfsTraversal()\` loops over every vertex and starts a new \`bfs()\` from any vertex that is still unvisited, so
+            disconnected pieces are not missed. The \`visited\` array is shared between calls.
+          `,
+          code: `
+            function bfs(graph, start, visited, result) {
+              let queue = [start];
+              let front = 0;
+
+              visited[start] = true;
+
+              while (front < queue.length) {
+                let node = queue[front++];
+
+                result.push(node);
+
+                for (let neighbor of graph[node]) {
+                  if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    queue.push(neighbor);
+                  }
+                }
+              }
+            }
+
+            function bfsTraversal(graph, V) {
+              let visited = new Array(V).fill(false);
+              let result = [];
+
+              for (let i = 0; i < V; i++) {
+                if (!visited[i]) {
+                  bfs(graph, i, visited, result);
+                }
+              }
+
+              return result;
+            }
+          `,
+        },
+      ],
+      explanation: `
+        **This is the template for most graph problems.** Change what you do when you pop a node, and you get:
+        - **Count connected components:** count how many times \`bfsTraversal\` calls \`bfs\` (LC 547 Number of Provinces).
+        - **Number of Islands:** the same loop over every cell of a grid.
+        - **Shortest path in an unweighted graph:** BFS visits nodes level by level, so the first time you reach a node is the shortest way there.
+
+        **Why O(V + E):** every vertex goes into a queue once, and each edge is looked at once from each end. The outer loop adds
+        O(V) checks, but never repeats work, because \`visited\` is shared.
+
+        **Why visit neighbours in list order matters:** the BFS order depends on how the adjacency list is ordered. Two correct
+        programs can print different orders if they build the list differently, so interviewers usually accept any valid BFS order.
+      `,
+      fn: 'bfsTraversal',
+      tests: [
+        { args: [[[1, 2], [0, 3], [0, 4], [1], [2]], 5], expected: [0, 1, 2, 3, 4] },
+        { args: [[[1, 2], [0, 3], [0, 3], [1, 2, 4], [3], [6], [5]], 7], expected: [0, 1, 2, 3, 4, 5, 6], label: 'the example in the visual (two pieces)' },
+        { args: [[[2, 1], [2], [0, 1, 3], [2]], 4], expected: [0, 2, 1, 3], label: 'neighbour order decides the BFS order' },
+        { args: [[[1], [0], [3], [2], []], 5], expected: [0, 1, 2, 3, 4], label: 'three pieces, one node alone' },
+        { args: [[[]], 1], expected: [0] },
+      ],
+    },
+    {
       id: 'number-of-islands',
       title: 'Number of Islands',
       difficulty: 'Medium',

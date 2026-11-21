@@ -76,6 +76,7 @@ const rows = [
   [1480, 'running-sum-of-1d-array', 'Running Sum of 1d Array', 'Easy', 'AC'],
   [1497, 'check-if-array-pairs-are-divisible-by-k', 'Check If Array Pairs Are Divisible by k', 'Medium', 'WA'],
   [1903, 'largest-odd-number-in-string', 'Largest Odd Number in String', 'Easy', 'AC'],
+  [1971, 'find-if-path-exists-in-graph', 'Find if Path Exists in Graph', 'Easy', 'AC'],
   [2144, 'minimum-cost-of-buying-candies-with-discount', 'Minimum Cost of Buying Candies With Discount', 'Easy', 'AC'],
   [2185, 'counting-words-with-a-given-prefix', 'Counting Words With a Given Prefix', 'Easy', 'AC'],
   [2619, 'array-prototype-last', 'Array Prototype Last', 'Easy', 'AC'],
