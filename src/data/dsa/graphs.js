@@ -586,6 +586,136 @@ One pass over the $T$ trust pairs and one pass over the $n$ people: $O(n + T)$ t
       ],
     },
     {
+      id: 'undirected-graph-cycle',
+      title: 'Undirected Graph Cycle',
+      difficulty: 'Medium',
+      lc: 'https://www.geeksforgeeks.org/problems/detect-cycle-in-an-undirected-graph/1',
+      from: 'Lec 21 – Graph',
+      tags: ['dfs', 'bfs', 'union-find', 'cycle', 'parent'],
+      statement: 'Given an undirected graph with `V` vertices as an adjacency list `adj` (`adj[u]` lists every vertex connected to `u`), return `true` if the graph contains a cycle.\n\n**Examples:** `adj = [[1,2],[0,2],[0,1]]` (a triangle) → `true` · `adj = [[1],[0,2],[1]]` (a line 0–1–2) → `false`\n\nGeeksforGeeks wraps it as `class Solution { isCycle(adj) }`; the tests here run it the same way.',
+      visual: {"type": "graph", "title": "DFS with a parent, looking for a cycle", "nodes": {"0": [70, 150], "1": [175, 70], "2": [280, 150], "3": [400, 70], "4": [505, 150], "5": [400, 230]}, "edges": [["0", "1"], ["1", "2"], ["3", "4"], ["4", "5"], ["5", "3"]], "listLabel": "call stack", "waitingLabel": "visited, still on the call stack", "steps": [{"seen": [], "done": [], "list": [], "tree": [], "code": "isCycle(adj)", "caption": "Two separate pieces: 0–1–2 is a simple line (no cycle), and 3–4–5 is a triangle (a cycle). Each undirected edge is stored both ways, e.g. 1 is in adj[0] and 0 is in adj[1].", "stat": {"label": "cycle found", "value": "no"}}, {"seen": ["0"], "done": [], "list": ["0"], "tree": [], "current": "0", "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(0, parent = -1)  // visited[0] = true", "caption": "Start a DFS from 0. It has no parent yet, so parent = -1."}, {"seen": ["0", "1"], "done": [], "list": ["0", "1"], "tree": [["0", "1"]], "current": "1", "hot": [["0", "1"]], "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(1, parent = 0)  // visited[1] = true", "caption": "1 is not visited, so go deeper: DFS(1) with parent 0, the node we came from."}, {"seen": ["0", "1"], "done": [], "list": ["0", "1"], "tree": [["0", "1"]], "current": "1", "hot": [["1", "0"]], "stat": {"label": "cycle found", "value": "no"}, "code": "neighbor 0 is visited, but 0 == parent  →  ignore", "caption": "1 sees 0: visited, but 0 is the parent, the node we just came from. That is the same edge seen from the other end, not a cycle. Ignore it."}, {"seen": ["0", "1", "2"], "done": [], "list": ["0", "1", "2"], "tree": [["0", "1"], ["1", "2"]], "current": "2", "hot": [["1", "2"]], "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(2, parent = 1)  // visited[2] = true", "caption": "2 is not visited, so go deeper: DFS(2) with parent 1, the node we came from."}, {"seen": ["0", "1", "2"], "done": [], "list": ["0", "1", "2"], "tree": [["0", "1"], ["1", "2"]], "current": "2", "hot": [["2", "1"]], "stat": {"label": "cycle found", "value": "no"}, "code": "neighbor 1 is visited, but 1 == parent  →  ignore", "caption": "2 sees 1: visited, but 1 is the parent, the node we just came from. That is the same edge seen from the other end, not a cycle. Ignore it."}, {"seen": ["0", "1", "2"], "done": ["2"], "list": ["0", "1"], "tree": [["0", "1"], ["1", "2"]], "current": "1", "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(2) returns false", "caption": "All neighbours of 2 checked, no cycle through 2. Return false to DFS(1)."}, {"seen": ["0", "1", "2"], "done": ["2", "1"], "list": ["0"], "tree": [["0", "1"], ["1", "2"]], "current": "0", "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(1) returns false", "caption": "All neighbours of 1 checked, no cycle through 1. Return false to DFS(0)."}, {"seen": ["0", "1", "2"], "done": ["2", "1", "0"], "list": [], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(0) returns false", "caption": "All neighbours of 0 checked, no cycle through 0. Return false. This piece has no cycle."}, {"seen": ["0", "1", "2"], "done": ["2", "1", "0"], "list": [], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "cycle found", "value": "no"}, "code": "i = 3: !visited[3]  →  DFS(3, -1)", "caption": "Back in the main loop: 1 and 2 are visited, 3 is not, so the second piece gets its own DFS."}, {"seen": ["0", "1", "2", "3"], "done": ["2", "1", "0"], "list": ["3"], "tree": [["0", "1"], ["1", "2"]], "current": "3", "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(3, parent = -1)  // visited[3] = true", "caption": "Start a DFS from 3. It has no parent yet, so parent = -1."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["2", "1", "0"], "list": ["3", "4"], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "current": "4", "hot": [["3", "4"]], "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(4, parent = 3)  // visited[4] = true", "caption": "4 is not visited, so go deeper: DFS(4) with parent 3, the node we came from."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["2", "1", "0"], "list": ["3", "4"], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "current": "4", "hot": [["4", "3"]], "stat": {"label": "cycle found", "value": "no"}, "code": "neighbor 3 is visited, but 3 == parent  →  ignore", "caption": "4 sees 3: visited, but 3 is the parent, the node we just came from. That is the same edge seen from the other end, not a cycle. Ignore it."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0"], "list": ["3", "4", "5"], "tree": [["0", "1"], ["1", "2"], ["3", "4"], ["4", "5"]], "current": "5", "hot": [["4", "5"]], "stat": {"label": "cycle found", "value": "no"}, "code": "DFS(5, parent = 4)  // visited[5] = true", "caption": "5 is not visited, so go deeper: DFS(5) with parent 4, the node we came from."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0"], "list": ["3", "4", "5"], "tree": [["0", "1"], ["1", "2"], ["3", "4"], ["4", "5"]], "current": "5", "hot": [["5", "4"]], "stat": {"label": "cycle found", "value": "no"}, "code": "neighbor 4 is visited, but 4 == parent  →  ignore", "caption": "5 sees 4: visited, but 4 is the parent, the node we just came from. That is the same edge seen from the other end, not a cycle. Ignore it."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0"], "list": ["3", "4", "5"], "tree": [["0", "1"], ["1", "2"], ["3", "4"], ["4", "5"]], "current": "5", "hot": [["5", "3"]], "stat": {"label": "cycle found", "value": "yes"}, "code": "neighbor 3 is visited and 3 != parent 4  →  return true", "caption": "5 sees 3: already visited, and it is NOT the node we came from (4). So there is a second way to reach 3: 3 → 4 → 5 → 3. That is a cycle. Return true all the way up."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0"], "list": ["3", "4", "5"], "tree": [["0", "1"], ["1", "2"], ["3", "4"], ["4", "5"]], "hot": [["5", "3"]], "stat": {"label": "cycle found", "value": "yes"}, "code": "return true", "caption": "isCycle returns true. The cycle is 3 → 4 → 5 → 3. If the edge 5–3 were removed, every visited neighbour would be a parent and the answer would be false."}]},
+      approaches: [
+        {
+          name: 'BFS with a parent',
+          time: 'O(V + E)',
+          space: 'O(V)',
+          idea: 'Same rule with a queue: store each node with the node it was reached from. A visited neighbour that is not that parent means a second path, so a cycle.',
+          code: `
+            class Solution {
+              isCycle(adj) {
+                const n = adj.length;
+                const visited = new Array(n).fill(false);
+                for (let s = 0; s < n; s++) {
+                  if (visited[s]) continue;
+                  visited[s] = true;
+                  const queue = [[s, -1]];
+                  for (let front = 0; front < queue.length; front++) {
+                    const [node, parent] = queue[front];
+                    for (const nb of adj[node]) {
+                      if (!visited[nb]) {
+                        visited[nb] = true;
+                        queue.push([nb, node]);
+                      } else if (nb !== parent) {
+                        return true;
+                      }
+                    }
+                  }
+                }
+                return false;
+              }
+            }
+          `,
+        },
+        {
+          name: 'Union-Find',
+          time: 'O((V + E) · α(V))',
+          space: 'O(V)',
+          idea: 'Go through each edge once (only `u < v`, because the list has every edge twice). If both ends are **already in the same group**, this edge closes a cycle; otherwise merge the two groups.',
+          code: `
+            class Solution {
+              isCycle(adj) {
+                const parent = adj.map((_, i) => i);
+                const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+                for (let u = 0; u < adj.length; u++) {
+                  for (const v of adj[u]) {
+                    if (u > v) continue;
+                    const a = find(u), b = find(v);
+                    if (a === b) return true;
+                    parent[a] = b;
+                  }
+                }
+                return false;
+              }
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (DFS with parent, GfG)',
+          time: 'O(V + E)',
+          space: 'O(V) for visited + recursion depth',
+          idea: `
+            DFS remembers which node it came from (\`parent\`). Seeing the parent again is just the same edge from the other end. But a
+            visited neighbour that is **not** the parent means you can reach it two different ways, which is a cycle. The outer loop
+            runs a DFS on every separate piece of the graph. Step through the visual above.
+          `,
+          code: `
+            class Solution {
+              isCycle(adj) {
+                let n = adj.length;
+                let visited = new Array(n).fill(false);
+
+                function DFS(source, parent, graph, visited) {
+                  visited[source] = true;
+
+                  for (let neighbor of graph[source]) {
+                    if (!visited[neighbor]) {
+                      if (DFS(neighbor, source, graph, visited)) {
+                        return true;
+                      }
+                    } else if (neighbor != parent) {
+                      return true;
+                    }
+                  }
+                  return false;
+                }
+
+                for (let i = 0; i < n; i++) {
+                  if (!visited[i]) {
+                    if (DFS(i, -1, adj, visited)) {
+                      return true;
+                    }
+                  }
+                }
+                return false;
+              }
+            }
+          `,
+        },
+      ],
+      explanation: `
+        **Why the parent check works:** in an undirected graph every edge appears from both ends. When DFS goes 1 → 2, node 2 then
+        sees 1 as a neighbour, and 1 is visited. That's not a cycle, just the edge you walked in on, so you skip the parent. Any
+        **other** visited neighbour is a node you already reached by a different path, so the two paths together form a cycle.
+
+        **Two things to say in the interview:**
+        - **Check every piece of the graph** (your outer loop). A cycle can be in a part that isn't connected to vertex 0, like the triangle in the visual.
+        - **Directed graphs need a different rule.** In a directed graph, a visited neighbour isn't enough: you need to know if it is still **on the current DFS path** (an extra \`inPath\` array), or use Kahn's topological sort. That is usually the next question.
+
+        **Edge case:** if the graph can have two edges between the same pair (a "multigraph"), the parent trick would wrongly
+        ignore the second edge. Union-Find over the edge list handles that. GfG's version has no duplicate edges.
+      `,
+      fn: 'Solution',
+      method: 'isCycle',
+      tests: [
+        { args: [[[1, 2], [0, 2], [0, 1]]], expected: true, label: 'a triangle' },
+        { args: [[[1], [0, 2], [1]]], expected: false, label: 'a line 0–1–2' },
+        { args: [[[1], [0, 2], [1], [4, 5], [3, 5], [4, 3]]], expected: true, label: 'the example in the visual: the cycle is in the second piece' },
+        { args: [[[1], [0, 2], [1], [4], [3]]], expected: false, label: 'two pieces, no cycle' },
+        { args: [[[1, 3], [0, 2], [1, 3], [2, 0]]], expected: true, label: 'a square 0–1–2–3–0' },
+        { args: [[[]]], expected: false, label: 'one vertex' },
+      ],
+    },
+    {
       id: 'number-of-islands',
       title: 'Number of Islands',
       difficulty: 'Medium',

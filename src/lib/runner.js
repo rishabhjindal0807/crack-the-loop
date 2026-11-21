@@ -42,6 +42,11 @@ export function runTests(q, code) {
           const r = obj[op](...clone(opArgs[k]));
           return r === undefined ? null : r;
         })];
+      } else if (q.method) {
+        // GeeksforGeeks-style: class Solution { method(...) }
+        const args = q.input ? q.input(clone(t.args), H) : clone(t.args);
+        got = new impl()[q.method](...args);
+        if (q.output) got = q.output(got, H, args);
       } else {
         const args = q.input ? q.input(clone(t.args), H) : clone(t.args);
         got = impl(...args);
