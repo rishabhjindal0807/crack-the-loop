@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { allQuestions } from '../data/dsa/index.js';
 import { sections } from '../data/sections.js';
-import { allClasses, classById, current } from '../data/classes.js';
+import { allClasses, classById, current, classWhen } from '../data/classes.js';
 import { lcSubmissions } from '../data/leetcode.js';
 import { useProgress } from '../lib/progress.js';
 import { Badge, Card, ProgressBar, StatusPill, diffColor } from '../components/ui.jsx';
@@ -11,10 +11,14 @@ import { allOpps, daysUntil, nextRound, prepTasks, whenLabel } from '../lib/opps
 // Today answers one question: what should I do next?
 function nextStep(p) {
   const start = allClasses.findIndex((c) => c.id === current);
-  // the current class first, then the classes after it, then anything earlier that was skipped
+  // the current class first (its own problems, then more from its topics), then the classes after it,
+  // then anything earlier that was skipped
   const order = [...allClasses.slice(start), ...allClasses.slice(0, start)];
   for (const c of order) {
-    const q = c.problems.find((x) => !p.isDone(x.uid));
+    const pool = c.id === current
+      ? [...c.problems, ...c.topics.flatMap((t) => allQuestions.filter((q) => q.topicId === t))]
+      : c.problems;
+    const q = pool.find((x) => !p.isDone(x.uid));
     if (q) return { cls: c, q, isCurrent: c.id === current };
   }
   return null;
@@ -86,6 +90,24 @@ export default function Today() {
               <Badge className={diffColor[step.q.difficulty]}>{step.q.difficulty}</Badge>
               <span className="text-sm text-slate-600 dark:text-slate-400">{step.q.topicTitle}</span>
             </div>
+            {(() => {
+              const upcoming = allClasses.filter((c) => c.upcoming && c.id !== step.cls.id);
+              const live = step.cls.upcoming ? step.cls : null;
+              return (
+                <div className="mt-6 space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
+                  {live && <p><span className="font-medium">{live.code} {live.title}</span>: live class {classWhen(live).toLowerCase().startsWith('today') ? '' : 'on '}{classWhen(live)}{live.instructor ? ` with ${live.instructor}` : ''}.</p>}
+                  {upcoming.slice(0, 1).map((u) => {
+                    const missed = allClasses.find((x) => x.missed && x.title === u.title && x.id !== u.id);
+                    return (
+                      <p key={u.id}>
+                        Next: <Link to={`/classes/${u.id}`} className="font-medium underline decoration-slate-300 underline-offset-4 dark:decoration-slate-600">{u.code} {u.title}</Link>, {classWhen(u)}.
+                        {missed && <> You missed the <Link to={`/classes/${missed.id}`} className="font-medium text-amber-800 underline underline-offset-4 dark:text-amber-300">{missed.code} lecture</Link> on this, so read its notes first.</>}
+                      </p>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             {step.isCurrent && (
               <div className="mt-6 max-w-sm">
                 <ProgressBar value={p.doneCount(curIds)} total={curIds.length} label={`${cur.code} progress`} />

@@ -2,9 +2,10 @@ export default {
   id: 'graphs',
   title: 'Graphs',
   icon: '🕸️',
-  source: 'curriculum',
+  source: 'notes',
   blurb: 'BFS/DFS on grids and adjacency lists, topological sort, union-find, Dijkstra.',
   concepts: `
+    - **Degree:** in-degree = edges coming **into** a node, out-degree = edges going **out**. Many problems need only these counts, not the full graph: town judge / celebrity, sources and sinks, and the start of topological sort (nodes with in-degree 0).
     - **Representations:** adjacency list (\`Map\`/array of arrays) for sparse graphs; matrix for dense or grids.
     - **BFS** → shortest path in unweighted graphs, level-by-level spreading (rotting oranges). **DFS** → connectivity, cycle detection, flood fill.
     - **Topological sort** (DAG): Kahn's algorithm (BFS on in-degree 0) — if not all nodes are output, there is a cycle.
@@ -14,6 +15,123 @@ export default {
     - Real-world tie-in: Temporal workflows / taskbooks in OptimaAI are DAGs of activities — topological order is exactly how dependent steps get scheduled.
   `,
   questions: [
+    {
+      id: 'find-the-town-judge',
+      title: 'Find the Town Judge',
+      difficulty: 'Easy',
+      lc: 'find-the-town-judge',
+      from: 'Lec 21 – Graph',
+      tags: ['in-degree', 'out-degree', 'directed-graph'],
+      statement: 'There are `n` people labelled `1` to `n`. `trust[i] = [a, b]` means person `a` trusts person `b`. The **town judge** trusts nobody, is trusted by everybody else, and there is exactly one such person. Return the judge\'s label, or `-1` if there is none.\n\n**Think of it as a directed graph:** people are nodes and "a trusts b" is an edge a → b. The judge is the node with **in-degree n − 1** and **out-degree 0**.\n\n**Examples:** `n = 2, trust = [[1,2]]` → `2` · `n = 3, trust = [[1,3],[2,3]]` → `3` · `n = 3, trust = [[1,3],[2,3],[3,1]]` → `-1`',
+      approaches: [
+        {
+          name: 'In-degree and out-degree arrays',
+          time: 'O(n + T)',
+          space: 'O(n)',
+          idea: 'Count, for every person, how many people trust them (in-degree) and how many people they trust (out-degree). The judge is the one with `in = n − 1` and `out = 0`.',
+          code: `
+            function findJudge(n, trust) {
+              const indeg = new Array(n + 1).fill(0);
+              const outdeg = new Array(n + 1).fill(0);
+              for (const [a, b] of trust) {
+                outdeg[a]++;
+                indeg[b]++;
+              }
+              for (let p = 1; p <= n; p++) {
+                if (indeg[p] === n - 1 && outdeg[p] === 0) return p;
+              }
+              return -1;
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (one score array, LeetCode)',
+          time: 'O(n + T)',
+          space: 'O(n)',
+          idea: `
+            Use **one** array: \`+1\` for each person who trusts you, \`−1\` for each person you trust. Only the judge can reach
+            \`n − 1\` (see *Why it works*). The picture above shows the scores for a small example.
+          `,
+          code: `
+            var findJudge = function (n, trust) {
+              if (trust.length == 0 && n == 1) return n;
+              let graph = new Array(n + 1).fill(0);
+
+              for (let i = 0; i < trust.length; i++) {
+                let u = trust[i][0];
+                let v = trust[i][1];
+                graph[u]--;
+                graph[v]++;
+              }
+              for (let i = 0; i <= n; i++) {
+                if (graph[i] == n - 1) return i;
+              }
+              return -1;
+            };
+          `,
+        },
+      ],
+      math: {
+        figure: 'town-judge',
+        body: `
+Give every person a **trust score**: $\\text{score}(p) = \\text{in}(p) - \\text{out}(p)$, where $\\text{in}(p)$ is how many people trust $p$ and $\\text{out}(p)$ is how many people $p$ trusts. Your loop computes exactly this: \`graph[v]++\` for the person trusted, \`graph[u]--\` for the person trusting.
+
+#### Why score $= n - 1$ means "judge"
+
+LeetCode guarantees no one trusts themselves and no pair repeats, so:
+
+$$0 \\le \\text{in}(p) \\le n - 1 \\qquad\\text{and}\\qquad \\text{out}(p) \\ge 0$$
+
+The score can only reach $n - 1$ when **both** limits are hit at once:
+
+$$\\text{score}(p) = n - 1 \\iff \\text{in}(p) = n - 1 \\;\\text{ and }\\; \\text{out}(p) = 0$$
+
+That is word for word the definition: everybody else trusts $p$, and $p$ trusts nobody.
+
+#### Why there can't be two judges
+
+Suppose $A$ and $B$ both had score $n - 1$. Then $B$ is trusted by everyone else, including $A$, so $\\text{out}(A) \\ge 1$. That contradicts $\\text{out}(A) = 0$. So the first person you find with score $n - 1$ is the only answer.
+
+#### The example in the picture ($n = 4$)
+
+| person | trusted by (in) | trusts (out) | score |
+|:-:|:-:|:-:|:-:|
+| 1 | 0 | 2 | −2 |
+| 2 | 0 | 2 | −2 |
+| 3 | 3 | 0 | **3 = n − 1** |
+| 4 | 1 | 1 | 0 |
+
+#### Edge case: $n = 1$, no trust pairs
+
+Person 1 has score $0 = n - 1$, so person 1 is the judge. Your early \`return n\` handles this, because your second loop starts at index \`0\` (which always has score 0 and would wrongly match when $n = 1$). If the loop starts at \`1\`, the special case isn't needed at all.
+
+#### Complexity
+
+One pass over the $T$ trust pairs and one pass over the $n$ people: $O(n + T)$ time and $O(n)$ space.
+`,
+      },
+      explanation: `
+        **The graph idea to remember from this class:** you don't always need to build an adjacency list. Many graph questions only
+        need each node's **in-degree** and **out-degree**: judge / celebrity problems, finding sources and sinks, and the first step of
+        topological sort (Kahn's algorithm starts from nodes with in-degree 0).
+
+        **Small improvement to your code:** start the last loop at \`i = 1\`, since labels go from 1 to n. Then the special case
+        \`if (trust.length == 0 && n == 1)\` is no longer needed.
+
+        **Follow-up interviewers ask:** *Find the Celebrity* (LC 277). You can't see the edges, only call \`knows(a, b)\`.
+        Keep one candidate: if the candidate knows \`i\`, the candidate can't be the celebrity, so \`i\` becomes the candidate.
+        Then verify the final candidate in one more pass. That's O(n) calls instead of O(n²).
+      `,
+      fn: 'findJudge',
+      tests: [
+        { args: [2, [[1, 2]]], expected: 2 },
+        { args: [3, [[1, 3], [2, 3]]], expected: 3 },
+        { args: [3, [[1, 3], [2, 3], [3, 1]]], expected: -1, label: 'the candidate trusts someone' },
+        { args: [4, [[1, 3], [1, 4], [2, 3], [2, 4], [4, 3]]], expected: 3, label: 'the example in the picture' },
+        { args: [3, [[1, 2], [2, 3]]], expected: -1, label: 'nobody is trusted by everyone' },
+        { args: [1, []], expected: 1, label: 'one person, no trust pairs' },
+      ],
+    },
     {
       id: 'number-of-islands',
       title: 'Number of Islands',

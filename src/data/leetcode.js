@@ -71,6 +71,7 @@ const rows = [
   [724, 'find-pivot-index', 'Find Pivot Index', 'Easy', 'AC'],
   [912, 'sort-an-array', 'Sort an Array', 'Medium', 'AC'],
   [921, 'minimum-add-to-make-parentheses-valid', 'Minimum Add to Make Parentheses Valid', 'Medium', 'AC'],
+  [997, 'find-the-town-judge', 'Find the Town Judge', 'Easy', 'AC'],
   [1390, 'four-divisors', 'Four Divisors', 'Medium', 'AC'],
   [1480, 'running-sum-of-1d-array', 'Running Sum of 1d Array', 'Easy', 'AC'],
   [1497, 'check-if-array-pairs-are-divisible-by-k', 'Check If Array Pairs Are Divisible by k', 'Medium', 'WA'],

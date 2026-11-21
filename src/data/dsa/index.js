@@ -135,10 +135,10 @@ for (const t of order) {
   // class / notes problems first, keeping their relative order
   t.questions.sort((a, b) => Number(!a.from) - Number(!b.from));
 }
-for (const t of [strings, graphs]) {
-  t.source = 'curriculum';
-  t.lecture = 'Not covered in class yet';
-}
+strings.source = 'curriculum';
+strings.lecture = 'Not covered in class yet';
+graphs.source = 'notes';
+graphs.lecture = 'Lec 21';
 
 export const topics = order;
 

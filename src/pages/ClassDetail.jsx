@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { allClasses, classById, current, kindMeta, topicTitles } from '../data/classes.js';
+import { allClasses, classById, current, kindMeta, topicTitles, classWhen } from '../data/classes.js';
+import Markdown from '../lib/Markdown.jsx';
 import { useProgress } from '../lib/progress.js';
 import { Badge, LcBadge, ProgressBar, StatusButton, StatusPill, diffColor } from '../components/ui.jsx';
 import { lcStatus } from '../data/leetcode.js';
@@ -46,6 +47,19 @@ export default function ClassDetail() {
         {c.id === current && <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-600/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-indigo-400/20">Current class</Badge>}
       </div>
       <p className="mt-2 max-w-2xl text-[15px] text-slate-600 dark:text-slate-400">{c.about}</p>
+      {c.date && (
+        <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+          {c.upcoming ? 'Live class: ' : 'Held on '}
+          <span className="font-medium">{classWhen(c)}</span>
+          {c.instructor && <> with {c.instructor}</>}
+        </p>
+      )}
+      {c.missed && (
+        <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+          <strong>You missed this class.</strong> Watch the recording on{' '}
+          <a className="font-medium underline" href={links.bosscoder} target="_blank" rel="noreferrer">Bosscoder</a>, or read the class notes and the key concepts below, then do the problems.
+        </p>
+      )}
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Topic{topicTitles(c).length > 1 ? 's' : ''}:{' '}
         {topicTitles(c).map((t, k) => (
@@ -100,13 +114,44 @@ export default function ClassDetail() {
 
       {c.problems.length === 0 && (
         <p className="mt-8 rounded-xl border border-dashed border-slate-300 p-6 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
-          No problems are linked to this class yet. Practise from{' '}
+          No problems from this class yet. Send Claude the class problems to add them here. Until then, practise from{' '}
           {topicTitles(c).map((t, k) => (
             <span key={t.id}>{k > 0 && ' or '}<Link className="font-medium text-indigo-700 underline dark:text-indigo-300" to={`/dsa/${t.id}`}>{t.title}</Link></span>
           ))}
-          , or send Claude the class problems to add them here.
+          .
         </p>
       )}
+
+      {topicTitles(c).map((t) => (
+        <details key={t.id} className="mt-10 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900" open={c.problems.length < 3}>
+          <summary className="cursor-pointer text-[15px] font-semibold text-slate-900 dark:text-white">Key concepts: {t.title}</summary>
+          <div className="mt-3"><Markdown>{t.concepts}</Markdown></div>
+        </details>
+      ))}
+
+      {(() => {
+        const inClass = new Set(ids);
+        const more = topicTitles(c).flatMap((t) => t.questions.filter((q) => !inClass.has(`${t.id}/${q.id}`)).map((q) => ({ ...q, uid: `${t.id}/${q.id}`, topicId: t.id })));
+        if (!more.length) return null;
+        return (
+          <section className="mt-10" aria-labelledby="more-practice">
+            <h2 id="more-practice" className="text-lg font-semibold text-slate-900 dark:text-white">
+              More practice on {topicTitles(c).map((t) => t.title).join(' and ')} <span className="font-normal text-slate-500 dark:text-slate-400">{p.doneCount(more.map((q) => q.uid))}/{more.length}</span>
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Not set in this class, but the same ideas.</p>
+            <ul className="mt-2 divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+              {more.map((q) => (
+                <li key={q.uid} className="flex items-center gap-3 py-2.5">
+                  <StatusButton status={p.status(q.uid)} onClick={() => p.toggleDone(q.uid)} title={q.title} />
+                  <Link to={`/dsa/${q.topicId}/${q.id}`} className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900 hover:text-indigo-700 dark:text-white dark:hover:text-indigo-300">{q.title}</Link>
+                  <span className="hidden sm:inline"><LcBadge status={lcStatus(q.lc)} compact /></span>
+                  <Badge className={diffColor[q.difficulty]}>{q.difficulty}</Badge>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })()}
 
       <section className="mt-10" aria-labelledby="notes-files">
         <h2 id="notes-files" className="text-lg font-semibold text-slate-900 dark:text-white">Class notes</h2>

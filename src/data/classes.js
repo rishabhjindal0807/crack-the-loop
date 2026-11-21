@@ -2,7 +2,7 @@ import { allQuestions, topicById } from './dsa/index.js';
 
 // Bosscoder Module 1 — every lecture (Lec) and instructor-led session (IL), grouped into units.
 // `current` marks the class you're on right now; update it as the module moves on.
-export const current = 'il-9';
+export const current = 'lec-21';
 
 export const units = [
   {
@@ -132,6 +132,9 @@ export const units = [
       { id: 'lec-16', code: 'Lec 16', title: 'BBST & Trees 2', topics: ['trees'],
         about: 'BST search / insert / delete, kth smallest, recovering a BST.',
         notes: ['Lec 16 - BBST & Trees 2 - Instructor Notes.pdf'] },
+      { id: 'il-10', code: 'IL10', title: 'Trees 1 & BST', topics: ['trees'],
+        about: 'Instructor-led practice on tree traversals and BSTs.',
+        notes: [] },
       { id: 'lec-17', code: 'Lec 17', title: 'Tries', topics: ['tries'],
         about: 'Prefix trees: insert / search / startsWith, wildcard search, replace words.',
         notes: ['Lec 17 - Tries - Instructor Notes.pdf'] },
@@ -152,7 +155,31 @@ export const units = [
         notes: ['Lec 20 - DP 1 & DP 2 - Instructor Notes.pdf'] },
     ],
   },
+  {
+    id: 'graphs',
+    title: 'Graphs',
+    classes: [
+      { id: 'lec-21', code: 'Lec 21', title: 'Graph', topics: ['graphs'],
+        about: 'Graph basics: nodes and edges, in-degree and out-degree, adjacency lists, BFS and DFS.',
+        notes: [] },
+    ],
+  },
 ];
+
+// Dates and attendance from your Bosscoder dashboard (P = present, A = absent). Upcoming classes have a time.
+// Update this when a class happens or new classes are scheduled.
+export const schedule = {
+  'lec-1': ['2026-08-29', 'P'], 'lec-2': ['2026-08-30', 'P'], 'il-1': ['2026-09-03', 'P'], 'lec-3': ['2026-09-05', 'P'],
+  'lec-4': ['2026-09-06', 'P'], 'il-2': ['2026-09-10', 'P'], 'lec-5': ['2026-09-12', 'P'], 'lec-6': ['2026-09-13', 'P'],
+  'il-3': ['2026-09-17', 'P'], 'lec-7': ['2026-09-19', 'P'], 'lec-8': ['2026-09-20', 'P'], 'il-4': ['2026-09-24', 'P'],
+  'lec-9': ['2026-09-27', 'P'], 'il-5': ['2026-10-01', 'P'], 'lec-10': ['2026-10-03', 'P'], 'lec-11': ['2026-10-04', 'P'],
+  'il-6': ['2026-10-08', 'P'], 'lec-12': ['2026-10-10', 'P'], 'lec-13': ['2026-10-11', 'A'], 'lec-14': ['2026-10-24', 'A'],
+  'lec-15': ['2026-10-25', 'A'], 'lec-16': ['2026-10-31', 'P'], 'lec-17': ['2026-11-01', 'P'], 'il-7': ['2026-11-05', 'P'],
+  'lec-18': ['2026-11-07', 'P'], 'il-8': ['2026-11-12', 'P'], 'lec-19': ['2026-11-14', 'P'], 'lec-20': ['2026-11-15', 'P'],
+  'il-9': ['2026-11-19', 'P'],
+  'lec-21': ['2026-11-21', null, '11:00 AM', 'Nimish Gupta'],
+  'il-10': ['2026-11-22', null, '11:00 AM', 'Nimish Gupta'],
+};
 
 // ---- link problems to classes by their `from` tag -------------------------------------
 // "Lec 13 + IL8 – …" belongs to both; "(+ IL7 homework 706)" adds a homework link to IL7.
@@ -174,7 +201,23 @@ function parseFrom(from) {
   return out;
 }
 
-export const allClasses = units.flatMap((u) => u.classes.map((c) => ({ ...c, unitId: u.id, unitTitle: u.title })));
+export const allClasses = units.flatMap((u) =>
+  u.classes.map((c) => {
+    const [date, attended, time, instructor] = schedule[c.id] || [];
+    return { ...c, unitId: u.id, unitTitle: u.title, date, missed: attended === 'A', upcoming: !attended && Boolean(date), time, instructor };
+  })
+);
+
+// "Today, 11:00 AM" / "Tomorrow" / "Sat, 25 Oct"
+export function classWhen(c) {
+  if (!c.date) return '';
+  const [y, m, d] = c.date.split('-').map(Number);
+  const day = new Date(y, m - 1, d);
+  const now = new Date();
+  const diff = Math.round((day - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  const label = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : day.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  return c.time && diff >= 0 ? `${label}, ${c.time}` : label;
+}
 export const classById = Object.fromEntries(allClasses.map((c) => [c.id, c]));
 
 const problemsByClass = Object.fromEntries(allClasses.map((c) => [c.id, []]));

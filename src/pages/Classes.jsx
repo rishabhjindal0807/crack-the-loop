@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { units, allClasses, classById, current, kindMeta } from '../data/classes.js';
+import { units, allClasses, classById, current, kindMeta, classWhen } from '../data/classes.js';
 import { useProgress } from '../lib/progress.js';
 import { PageHeader, ProgressBar, SectionTabs, practiceTabs } from '../components/ui.jsx';
 
@@ -94,6 +94,8 @@ export default function Classes() {
                           <span className="flex items-center gap-2">
                             <span className="truncate font-medium text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-300">{c.title}</span>
                             {isCur && <span className="shrink-0 rounded-md bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">Current</span>}
+                            {c.missed && <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">Missed</span>}
+                            {c.upcoming && !isCur && <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">Upcoming</span>}
                           </span>
                           <span className="mt-0.5 block truncate text-sm text-slate-600 dark:text-slate-400">
                             {c.problems.length
@@ -102,6 +104,7 @@ export default function Classes() {
                             <span className="hidden md:inline">{c.about ? `. ${c.about}` : ''}</span>
                           </span>
                         </span>
+                        <span className="hidden w-32 shrink-0 text-right text-sm text-slate-600 sm:block dark:text-slate-400">{classWhen(c)}</span>
                         <Ring value={p.doneCount(ids(c))} total={c.problems.length} />
                       </Link>
                     </li>
