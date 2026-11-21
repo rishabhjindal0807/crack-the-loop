@@ -262,7 +262,7 @@ One pass over the $T$ trust pairs and one pass over the $n$ people: $O(n + T)$ t
       from: 'Lec 21 – Graph',
       tags: ['bfs', 'traversal', 'connected-components'],
       statement: 'Given a graph with `V` vertices (`0` to `V − 1`) as an adjacency list `graph`, return the **BFS order** of all vertices. Start from vertex 0, visit neighbours in the order they appear in the list, and if some vertices are not reachable, start a new BFS from the smallest unvisited vertex.\n\n**Example:** `graph = [[1,2],[0,3],[0,4],[1],[2]]` → `[0, 1, 2, 3, 4]`',
-      visual: {"type": "graph", "title": "BFS over every piece of the graph", "nodes": {"0": [70, 150], "1": [185, 65], "2": [185, 235], "3": [300, 150], "4": [410, 150], "5": [505, 65], "6": [505, 235]}, "edges": [["0", "1"], ["0", "2"], ["1", "3"], ["2", "3"], ["3", "4"], ["5", "6"]], "labels": {}, "listLabel": "queue", "steps": [{"seen": [], "done": [], "list": [], "front": 0, "tree": [], "code": "bfsTraversal(graph, 7)", "caption": "The graph as an adjacency list: 0→[1,2], 1→[0,3], 2→[0,3], 3→[1,2,4], 4→[3], 5→[6], 6→[5]. It has two separate pieces, 0–4 and 5–6, so one BFS from 0 would miss 5 and 6."}, {"seen": ["0"], "done": [], "list": ["0"], "front": 0, "tree": [], "code": "bfs(graph, 0, visited, result)", "caption": "i = 0 is not visited, so start a BFS from it. Mark 0 visited and put it in a new queue."}, {"seen": ["0", "1", "2"], "done": [], "current": "0", "list": ["0", "1", "2"], "front": 1, "tree": [["0", "1"], ["0", "2"]], "hot": [["0", "1"], ["0", "2"]], "code": "node = queue[front++]  // 0;  result.push(node)", "caption": "Take 0 from the front of the queue and add it to the result. Neighbours: add 1, 2 to the queue and mark them visited."}, {"seen": ["0", "1", "2", "3"], "done": ["0"], "current": "1", "list": ["0", "1", "2", "3"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["1", "0"], ["1", "3"]], "code": "node = queue[front++]  // 1;  result.push(node)", "caption": "Take 1 from the front of the queue and add it to the result. Neighbours: add 3 to the queue and mark it visited; skip 0 (already visited)."}, {"seen": ["0", "1", "2", "3"], "done": ["0", "1"], "current": "2", "list": ["0", "1", "2", "3"], "front": 3, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["2", "0"], ["2", "3"]], "code": "node = queue[front++]  // 2;  result.push(node)", "caption": "Take 2 from the front of the queue and add it to the result. Neighbours: skip 0, 3 (already visited). 3 was marked visited when 1 added it, so it isn't added a second time. That is why we mark on push, not on pop."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2"], "current": "3", "list": ["0", "1", "2", "3", "4"], "front": 4, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["3", "1"], ["3", "2"], ["3", "4"]], "code": "node = queue[front++]  // 3;  result.push(node)", "caption": "Take 3 from the front of the queue and add it to the result. Neighbours: add 4 to the queue and mark it visited; skip 1, 2 (already visited)."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2", "3"], "current": "4", "list": ["0", "1", "2", "3", "4"], "front": 5, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["4", "3"]], "code": "node = queue[front++]  // 4;  result.push(node)", "caption": "Take 4 from the front of the queue and add it to the result. Neighbours: skip 3 (already visited)."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["0", "1", "2", "3", "4"], "list": ["5"], "front": 0, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "code": "bfs(graph, 5, visited, result)", "caption": "Back in bfsTraversal, the loop goes i = 1, 2, 3, 4 (all visited, skipped), then i = 5: not visited. A new piece of the graph, so call bfs again from 5, with a new queue. The visited array is shared, so nothing is visited twice."}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4"], "current": "5", "list": ["5", "6"], "front": 1, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "hot": [["5", "6"]], "code": "node = queue[front++]  // 5;  result.push(node)", "caption": "Take 5 from the front of the queue and add it to the result. Neighbours: add 6 to the queue and mark it visited."}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4", "5"], "current": "6", "list": ["5", "6"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "hot": [["6", "5"]], "code": "node = queue[front++]  // 6;  result.push(node)", "caption": "Take 6 from the front of the queue and add it to the result. Neighbours: skip 5 (already visited)."}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4", "5", "6"], "list": ["5", "6"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "code": "return result  // [0, 1, 2, 3, 4, 5, 6]", "caption": "Every node visited exactly once, piece by piece. Total work is O(V + E): each node enters a queue once, and each edge is checked from both ends."}]},
+      visual: {"type": "graph", "title": "BFS over every piece of the graph", "nodes": {"0": [70, 150], "1": [185, 65], "2": [185, 235], "3": [300, 150], "4": [410, 150], "5": [505, 65], "6": [505, 235]}, "edges": [["0", "1"], ["0", "2"], ["1", "3"], ["2", "3"], ["3", "4"], ["5", "6"]], "labels": {}, "listLabel": "queue", "steps": [{"seen": [], "done": [], "list": [], "front": 0, "tree": [], "code": "bfsTraversal(graph, 7)", "caption": "The graph as an adjacency list: 0→[1,2], 1→[0,3], 2→[0,3], 3→[1,2,4], 4→[3], 5→[6], 6→[5]. It has two separate pieces, 0–4 and 5–6, so one BFS from 0 would miss 5 and 6.", "result": []}, {"seen": ["0"], "done": [], "list": ["0"], "front": 0, "tree": [], "code": "bfs(graph, 0, visited, result)", "caption": "i = 0 is not visited, so start a BFS from it. Mark 0 visited and put it in a new queue.", "result": []}, {"seen": ["0", "1", "2"], "done": [], "current": "0", "list": ["0", "1", "2"], "front": 1, "tree": [["0", "1"], ["0", "2"]], "hot": [["0", "1"], ["0", "2"]], "code": "node = queue[front++]  // 0;  result.push(node)", "caption": "Take 0 from the front of the queue and add it to the result. Neighbours: add 1, 2 to the queue and mark them visited.", "result": ["0"]}, {"seen": ["0", "1", "2", "3"], "done": ["0"], "current": "1", "list": ["0", "1", "2", "3"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["1", "0"], ["1", "3"]], "code": "node = queue[front++]  // 1;  result.push(node)", "caption": "Take 1 from the front of the queue and add it to the result. Neighbours: add 3 to the queue and mark it visited; skip 0 (already visited).", "result": ["0", "1"]}, {"seen": ["0", "1", "2", "3"], "done": ["0", "1"], "current": "2", "list": ["0", "1", "2", "3"], "front": 3, "tree": [["0", "1"], ["0", "2"], ["1", "3"]], "hot": [["2", "0"], ["2", "3"]], "code": "node = queue[front++]  // 2;  result.push(node)", "caption": "Take 2 from the front of the queue and add it to the result. Neighbours: skip 0, 3 (already visited). 3 was marked visited when 1 added it, so it isn't added a second time. That is why we mark on push, not on pop.", "result": ["0", "1", "2"]}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2"], "current": "3", "list": ["0", "1", "2", "3", "4"], "front": 4, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["3", "1"], ["3", "2"], ["3", "4"]], "code": "node = queue[front++]  // 3;  result.push(node)", "caption": "Take 3 from the front of the queue and add it to the result. Neighbours: add 4 to the queue and mark it visited; skip 1, 2 (already visited).", "result": ["0", "1", "2", "3"]}, {"seen": ["0", "1", "2", "3", "4"], "done": ["0", "1", "2", "3"], "current": "4", "list": ["0", "1", "2", "3", "4"], "front": 5, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "hot": [["4", "3"]], "code": "node = queue[front++]  // 4;  result.push(node)", "caption": "Take 4 from the front of the queue and add it to the result. Neighbours: skip 3 (already visited).", "result": ["0", "1", "2", "3", "4"]}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["0", "1", "2", "3", "4"], "list": ["5"], "front": 0, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"]], "code": "bfs(graph, 5, visited, result)", "caption": "Back in bfsTraversal, the loop goes i = 1, 2, 3, 4 (all visited, skipped), then i = 5: not visited. A new piece of the graph, so call bfs again from 5, with a new queue. The visited array is shared, so nothing is visited twice.", "result": ["0", "1", "2", "3", "4"]}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4"], "current": "5", "list": ["5", "6"], "front": 1, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "hot": [["5", "6"]], "code": "node = queue[front++]  // 5;  result.push(node)", "caption": "Take 5 from the front of the queue and add it to the result. Neighbours: add 6 to the queue and mark it visited.", "result": ["0", "1", "2", "3", "4", "5"]}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4", "5"], "current": "6", "list": ["5", "6"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "hot": [["6", "5"]], "code": "node = queue[front++]  // 6;  result.push(node)", "caption": "Take 6 from the front of the queue and add it to the result. Neighbours: skip 5 (already visited).", "result": ["0", "1", "2", "3", "4", "5", "6"]}, {"seen": ["0", "1", "2", "3", "4", "5", "6"], "done": ["0", "1", "2", "3", "4", "5", "6"], "list": ["5", "6"], "front": 2, "tree": [["0", "1"], ["0", "2"], ["1", "3"], ["3", "4"], ["5", "6"]], "code": "return result  // [0, 1, 2, 3, 4, 5, 6]", "caption": "Every node visited exactly once, piece by piece. Total work is O(V + E): each node enters a queue once, and each edge is checked from both ends.", "result": ["0", "1", "2", "3", "4", "5", "6"]}]},
       approaches: [
         {
           name: 'Simple version with queue.shift()',
@@ -354,6 +354,108 @@ One pass over the $T$ trust pairs and one pass over the $n$ people: $O(n + T)$ t
         { args: [[[1, 2], [0, 3], [0, 4], [1], [2]], 5], expected: [0, 1, 2, 3, 4] },
         { args: [[[1, 2], [0, 3], [0, 3], [1, 2, 4], [3], [6], [5]], 7], expected: [0, 1, 2, 3, 4, 5, 6], label: 'the example in the visual (two pieces)' },
         { args: [[[2, 1], [2], [0, 1, 3], [2]], 4], expected: [0, 2, 1, 3], label: 'neighbour order decides the BFS order' },
+        { args: [[[1], [0], [3], [2], []], 5], expected: [0, 1, 2, 3, 4], label: 'three pieces, one node alone' },
+        { args: [[[]], 1], expected: [0] },
+      ],
+    },
+    {
+      id: 'dfs-traversal',
+      title: 'DFS Traversal of a Graph (all components)',
+      difficulty: 'Easy',
+      lc: 'https://www.geeksforgeeks.org/problems/depth-first-traversal-for-a-graph/1',
+      from: 'Lec 21 – Graph',
+      tags: ['dfs', 'recursion', 'traversal', 'connected-components'],
+      statement: 'Given a graph with `V` vertices (`0` to `V − 1`) as an adjacency list `graph`, return the **DFS order** of all vertices. Start from vertex 0, follow neighbours in the order they appear in the list, go as deep as possible before backtracking, and if some vertices are not reachable, start again from the smallest unvisited vertex.\n\n**Example:** `graph = [[1,2],[0,3],[0,4],[1],[2]]` → `[0, 1, 3, 2, 4]` (BFS on the same graph gives `[0, 1, 2, 3, 4]`)',
+      visual: {"type": "graph", "title": "Recursive DFS over every piece of the graph", "nodes": {"0": [70, 150], "1": [185, 65], "2": [185, 235], "3": [300, 150], "4": [410, 150], "5": [505, 65], "6": [505, 235]}, "edges": [["0", "1"], ["0", "2"], ["1", "3"], ["2", "3"], ["3", "4"], ["5", "6"]], "listLabel": "call stack", "waitingLabel": "visited, still on the call stack", "steps": [{"seen": [], "done": [], "list": [], "tree": [], "result": [], "code": "dfsTraversal(graph, 7)", "caption": "Same graph as the BFS problem: 0→[1,2], 1→[0,3], 2→[0,3], 3→[1,2,4], 4→[3], 5→[6], 6→[5]. DFS goes as deep as it can along one path before coming back."}, {"seen": ["0"], "done": [], "list": ["0"], "tree": [], "result": ["0"], "current": "0", "code": "dfs(graph, 0, visited, result)  // visited[0] = true; result.push(0)", "caption": "i = 0 is not visited: call dfs(0). Mark 0 visited and add it to the result. The call stack now holds dfs(0)."}, {"seen": ["0", "1"], "done": [], "list": ["0", "1"], "tree": [["0", "1"]], "result": ["0", "1"], "current": "1", "hot": [["0", "1"]], "code": "dfs(graph, 1, visited, result)  // visited[1] = true; result.push(1)", "caption": "In dfs(0): 1 is not visited, so go deeper: call dfs(1). Mark 1 visited and add it to the result. dfs(0) waits on the call stack until dfs(1) returns."}, {"seen": ["0", "1", "3"], "done": [], "list": ["0", "1", "3"], "tree": [["0", "1"], ["1", "3"]], "result": ["0", "1", "3"], "current": "3", "hot": [["1", "3"]], "code": "dfs(graph, 3, visited, result)  // visited[3] = true; result.push(3)", "caption": "In dfs(1): skip 0 (visited), then 3 is not visited, so go deeper: call dfs(3). Mark 3 visited and add it to the result. dfs(1) waits on the call stack until dfs(3) returns."}, {"seen": ["0", "1", "3", "2"], "done": [], "list": ["0", "1", "3", "2"], "tree": [["0", "1"], ["1", "3"], ["3", "2"]], "result": ["0", "1", "3", "2"], "current": "2", "hot": [["3", "2"]], "code": "dfs(graph, 2, visited, result)  // visited[2] = true; result.push(2)", "caption": "In dfs(3): skip 1 (visited), then 2 is not visited, so go deeper: call dfs(2). Mark 2 visited and add it to the result. dfs(3) waits on the call stack until dfs(2) returns."}, {"seen": ["0", "1", "3", "2"], "done": ["2"], "list": ["0", "1", "3"], "tree": [["0", "1"], ["1", "3"], ["3", "2"]], "result": ["0", "1", "3", "2"], "current": "3", "code": "return from dfs(2)", "caption": "dfs(2) has looked at all its neighbours (0, 3); every one is visited now. It returns to dfs(3). The call stack shrinks."}, {"seen": ["0", "1", "3", "2", "4"], "done": ["2"], "list": ["0", "1", "3", "4"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"]], "result": ["0", "1", "3", "2", "4"], "current": "4", "hot": [["3", "4"]], "code": "dfs(graph, 4, visited, result)  // visited[4] = true; result.push(4)", "caption": "In dfs(3): 4 is not visited, so go deeper: call dfs(4). Mark 4 visited and add it to the result. dfs(3) waits on the call stack until dfs(4) returns."}, {"seen": ["0", "1", "3", "2", "4"], "done": ["2", "4"], "list": ["0", "1", "3"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"]], "result": ["0", "1", "3", "2", "4"], "current": "3", "code": "return from dfs(4)", "caption": "dfs(4) has looked at all its neighbours (3); every one is visited now. It returns to dfs(3). The call stack shrinks."}, {"seen": ["0", "1", "3", "2", "4"], "done": ["2", "4", "3"], "list": ["0", "1"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"]], "result": ["0", "1", "3", "2", "4"], "current": "1", "code": "return from dfs(3)", "caption": "dfs(3) has looked at all its neighbours (1, 2, 4); every one is visited now. It returns to dfs(1). The call stack shrinks."}, {"seen": ["0", "1", "3", "2", "4"], "done": ["2", "4", "3", "1"], "list": ["0"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"]], "result": ["0", "1", "3", "2", "4"], "current": "0", "code": "return from dfs(1)", "caption": "dfs(1) has looked at all its neighbours (0, 3); every one is visited now. It returns to dfs(0). The call stack shrinks."}, {"seen": ["0", "1", "3", "2", "4"], "done": ["2", "4", "3", "1", "0"], "list": [], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"]], "result": ["0", "1", "3", "2", "4"], "code": "return from dfs(0)", "caption": "Back in dfs(0), its next neighbour is 2, but DFS already reached 2 deep down through 1 → 3, so it is skipped. dfs(0) returns to dfsTraversal and the call stack is empty."}, {"seen": ["0", "1", "3", "2", "4", "5"], "done": ["2", "4", "3", "1", "0"], "list": ["5"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"]], "result": ["0", "1", "3", "2", "4", "5"], "current": "5", "code": "dfs(graph, 5, visited, result)  // visited[5] = true; result.push(5)", "caption": "Back in dfsTraversal: i = 1, 2, 3, 4 are visited, so skip them. i = 5 is not: call dfs(5). A new piece of the graph."}, {"seen": ["0", "1", "3", "2", "4", "5", "6"], "done": ["2", "4", "3", "1", "0"], "list": ["5", "6"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"], ["5", "6"]], "result": ["0", "1", "3", "2", "4", "5", "6"], "current": "6", "hot": [["5", "6"]], "code": "dfs(graph, 6, visited, result)  // visited[6] = true; result.push(6)", "caption": "In dfs(5): 6 is not visited, so go deeper: call dfs(6). Mark 6 visited and add it to the result. dfs(5) waits on the call stack until dfs(6) returns."}, {"seen": ["0", "1", "3", "2", "4", "5", "6"], "done": ["2", "4", "3", "1", "0", "6"], "list": ["5"], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"], ["5", "6"]], "result": ["0", "1", "3", "2", "4", "5", "6"], "current": "5", "code": "return from dfs(6)", "caption": "dfs(6) has looked at all its neighbours (5); every one is visited now. It returns to dfs(5). The call stack shrinks."}, {"seen": ["0", "1", "3", "2", "4", "5", "6"], "done": ["2", "4", "3", "1", "0", "6", "5"], "list": [], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"], ["5", "6"]], "result": ["0", "1", "3", "2", "4", "5", "6"], "code": "return from dfs(5)", "caption": "dfs(5) has looked at all its neighbours (6); every one is visited now. It returns to dfsTraversal. The call stack shrinks."}, {"seen": ["0", "1", "3", "2", "4", "5", "6"], "done": ["2", "4", "3", "1", "0", "6", "5"], "list": [], "tree": [["0", "1"], ["1", "3"], ["3", "2"], ["3", "4"], ["5", "6"]], "result": ["0", "1", "3", "2", "4", "5", "6"], "code": "return result  // [0, 1, 3, 2, 4, 5, 6]", "caption": "Done: [0, 1, 3, 2, 4, 5, 6]. Compare with BFS on the same graph: [0, 1, 2, 3, 4, 5, 6]. DFS went 0 → 1 → 3 → 2 (deep first) before coming back; BFS visited 1 and 2 (one step from 0) before 3."}]},
+      approaches: [
+        {
+          name: 'Iterative DFS with your own stack',
+          time: 'O(V + E)',
+          space: 'O(V)',
+          idea: 'The same order without recursion: keep your own stack. Mark a node when you **pop** it (skip it if already visited), and push its unvisited neighbours in **reverse** order, so the first neighbour is on top and is explored first, just like the recursive version. Use this when the graph can be very deep: recursion in JavaScript fails at around 10,000 levels ("Maximum call stack size exceeded").',
+          code: `
+            function dfsTraversal(graph, V) {
+              const visited = new Array(V).fill(false);
+              const result = [];
+              for (let i = 0; i < V; i++) {
+                if (visited[i]) continue;
+                const stack = [i];
+                while (stack.length) {
+                  const node = stack.pop();
+                  if (visited[node]) continue;
+                  visited[node] = true;
+                  result.push(node);
+                  for (let k = graph[node].length - 1; k >= 0; k--) {
+                    const nb = graph[node][k];
+                    if (!visited[nb]) stack.push(nb);
+                  }
+                }
+              }
+              return result;
+            }
+          `,
+        },
+        {
+          name: 'Your solution (recursive DFS, every component)',
+          time: 'O(V + E)',
+          space: 'O(V) for visited + recursion depth',
+          idea: `
+            \`dfs()\` marks the node, adds it to the result, and calls itself on each unvisited neighbour. The **call stack**
+            remembers where to come back to, so you don't need your own stack. \`dfsTraversal()\` starts a new \`dfs()\` from every
+            vertex that is still unvisited, so separate pieces of the graph are covered. Step through the visual above.
+          `,
+          code: `
+            function dfs(graph, node, visited, result) {
+              visited[node] = true;
+
+              result.push(node);
+
+              for (let neighbor of graph[node]) {
+                if (!visited[neighbor]) {
+                  dfs(graph, neighbor, visited, result);
+                }
+              }
+            }
+
+            function dfsTraversal(graph, V) {
+              let visited = new Array(V).fill(false);
+              let result = [];
+
+              for (let i = 0; i < V; i++) {
+                if (!visited[i]) {
+                  dfs(graph, i, visited, result);
+                }
+              }
+
+              return result;
+            }
+          `,
+        },
+      ],
+      explanation: `
+        **BFS vs DFS, side by side:**
+
+        | | BFS | DFS |
+        |---|---|---|
+        | Data structure | queue (first in, first out) | stack: the call stack, or your own |
+        | Order | level by level, nearest first | one path as deep as possible, then back up |
+        | Order on the example graph | 0, 1, 2, 3, 4, 5, 6 | 0, 1, 3, 2, 4, 5, 6 |
+        | Shortest path (unweighted) | **yes**: the first visit is the shortest | no |
+        | Typical uses | shortest path, spreading by levels (rotting oranges) | cycle detection, topological sort, connected pieces, backtracking |
+        | Time / space | O(V + E) / O(V) | O(V + E) / O(V) |
+
+        **Note on your snippet:** \`console.log(dfsTraversal(graph, 6))\` needs a \`graph\` variable defined first, for example
+        \`const graph = [[1, 2], [0, 3], [0, 4], [1], [2], []];\`. The tests here call \`dfsTraversal\` directly, so that line isn't included.
+
+        **Why mark visited at the start of \`dfs()\`:** a node can be reached from two parents (3 from both 1 and 2 in the visual).
+        Marking it first means the second parent sees it as visited and doesn't explore it again. That is what keeps the whole traversal O(V + E).
+      `,
+      fn: 'dfsTraversal',
+      tests: [
+        { args: [[[1, 2], [0, 3], [0, 4], [1], [2]], 5], expected: [0, 1, 3, 2, 4] },
+        { args: [[[1, 2], [0, 3], [0, 3], [1, 2, 4], [3], [6], [5]], 7], expected: [0, 1, 3, 2, 4, 5, 6], label: 'the example in the visual (two pieces)' },
+        { args: [[[2, 1], [2], [0, 1, 3], [2]], 4], expected: [0, 2, 1, 3], label: 'neighbour order decides the DFS order' },
+        { args: [[[1, 2], [0, 3], [0, 4], [1], [2], []], 6], expected: [0, 1, 3, 2, 4, 5], label: 'your console.log example, with node 5 alone' },
         { args: [[[1], [0], [3], [2], []], 5], expected: [0, 1, 2, 3, 4], label: 'three pieces, one node alone' },
         { args: [[[]], 1], expected: [0] },
       ],

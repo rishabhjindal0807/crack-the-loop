@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 //   nodes: { [id]: [x, y] },            // positions in a 560 × 300 box
 //   edges: [[a, b], …],
 //   labels?: { [id]: 'source' | … },   // small text under a node
-//   listLabel?: 'queue' | 'stack',
+//   listLabel?: 'queue' | 'call stack',   // a stack shows its top on the right
+//   waitingLabel?: text for the "visited, waiting" legend entry,
 //   steps: [{
 //     seen: [ids],        // visited so far (marked when added to the queue / stack)
 //     done: [ids],        // already taken out and processed
@@ -15,6 +16,7 @@ import { useEffect, useState } from 'react';
 //     tree: [[a, b]],     // edges that discovered a new node so far
 //     hot: [[a, b]],      // edges looked at in this step (orange)
 //     found: id,          // destination reached
+//     result: [ids],      // output so far (traversals)
 //     code, caption,
 //   }]
 // }
@@ -44,6 +46,7 @@ export default function GraphVisual({ visual }) {
   const hot = new Set((st.hot || []).map(([a, b]) => key(a, b)));
   const list = st.list || [];
   const front = st.front || 0;
+  const isStack = /stack/.test(visual.listLabel || '');
 
   const nodeStyle = (id) => {
     if (st.found === id) return 'fill-emerald-100 stroke-emerald-600 dark:fill-emerald-500/30';
@@ -92,21 +95,32 @@ export default function GraphVisual({ visual }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm" aria-label={`${visual.listLabel || 'queue'} contents`}>
-        <span className="w-14 shrink-0 font-medium text-slate-700 dark:text-slate-300">{visual.listLabel || 'queue'}</span>
+        <span className="w-20 shrink-0 font-medium text-slate-700 dark:text-slate-300">{visual.listLabel || 'queue'}</span>
         {list.length === 0 && <span className="text-slate-600 dark:text-slate-400">empty</span>}
         {list.map((id, k) => (
           <span key={`${id}-${k}`} className="relative">
             <span className={`flex h-8 min-w-8 items-center justify-center rounded-md border px-2 font-mono font-semibold ${
               k < front ? 'border-slate-200 text-slate-400 line-through dark:border-slate-800 dark:text-slate-600' : 'border-indigo-300 bg-white text-slate-900 dark:border-indigo-500/50 dark:bg-slate-900 dark:text-white'
             }`}>{id}</span>
-            {k === front && front < list.length && <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-orange-700 dark:text-orange-300">front</span>}
+            {!isStack && k === front && front < list.length && <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-orange-700 dark:text-orange-300">front</span>}
+            {isStack && k === list.length - 1 && <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-orange-700 dark:text-orange-300">top</span>}
           </span>
         ))}
       </div>
 
+      {st.result && (
+        <div className="mt-6 flex flex-wrap items-center gap-2 text-sm" aria-label="result so far">
+          <span className="w-20 shrink-0 font-medium text-slate-700 dark:text-slate-300">result</span>
+          {st.result.length === 0 && <span className="text-slate-600 dark:text-slate-400">[ ]</span>}
+          {st.result.map((id, k) => (
+            <span key={k} className="flex h-8 min-w-8 items-center justify-center rounded-md bg-indigo-600 px-2 font-mono font-semibold text-white dark:bg-indigo-500">{id}</span>
+          ))}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-full border-2 border-slate-400 bg-white dark:bg-slate-900" /> not visited</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-full border-2 border-indigo-500 bg-indigo-100" /> visited, waiting</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-full border-2 border-indigo-500 bg-indigo-100" /> {visual.waitingLabel || 'visited, waiting'}</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-full bg-indigo-600" /> done</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-full border-2 border-orange-500 bg-orange-100" /> processing now</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 bg-indigo-500" /> edge that found a new node</span>
