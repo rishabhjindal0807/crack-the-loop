@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 //   nodes: { [id]: [x, y] },            // positions in a 560 × 300 box
 //   edges: [[a, b], …],
 //   labels?: { [id]: 'source' | … },   // small text under a node
+//   matrix?: number[][],  // show the adjacency matrix next to the graph; step.row highlights the row being scanned
 //   listLabel?: 'queue' | 'call stack',   // a stack shows its top on the right
 //   waitingLabel?: text for the "visited, waiting" legend entry,
 //   steps: [{
@@ -17,6 +18,8 @@ import { useEffect, useState } from 'react';
 //     hot: [[a, b]],      // edges looked at in this step (orange)
 //     found: id,          // destination reached
 //     result: [ids],      // output so far (traversals)
+//     row: index,         // matrix row being scanned
+//     stat: { label, value },  // a counter, e.g. provinces found so far
 //     code, caption,
 //   }]
 // }
@@ -67,6 +70,7 @@ export default function GraphVisual({ visual }) {
   return (
     <div>
       <p className="mb-2 text-xs text-slate-600 sm:hidden dark:text-slate-400">Swipe the diagram sideways to see the whole graph.</p>
+      <div className={visual.matrix ? 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]' : ''}>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950" tabIndex={0} aria-label="Graph diagram, scrollable">
         <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[420px]" role="img" aria-label={st.caption}>
           <defs>
@@ -93,6 +97,39 @@ export default function GraphVisual({ visual }) {
           ))}
         </svg>
       </div>
+      {visual.matrix && (
+        <div className="overflow-x-auto">
+          <table className="border-separate border-spacing-0.5 font-mono text-sm" aria-label="isConnected matrix">
+            <caption className="mb-1 text-left font-sans text-xs font-medium text-slate-600 dark:text-slate-400">isConnected</caption>
+            <thead>
+              <tr>
+                <th className="w-7" />
+                {visual.matrix.map((_, j) => <th key={j} scope="col" className="w-8 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">{j}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {visual.matrix.map((row, r) => (
+                <tr key={r}>
+                  <th scope="row" className={`pr-1 text-right text-xs font-semibold ${st.row === r ? 'text-orange-700 dark:text-orange-300' : 'text-slate-500 dark:text-slate-400'}`}>{r}</th>
+                  {row.map((v, c) => (
+                    <td key={c} className={`h-8 w-8 rounded text-center ${
+                      st.row === r ? (v ? 'bg-orange-500 font-bold text-white' : 'bg-orange-100 text-orange-900 dark:bg-orange-500/20 dark:text-orange-200')
+                        : v ? 'bg-indigo-100 font-bold text-indigo-900 dark:bg-indigo-500/25 dark:text-indigo-100' : 'bg-white text-slate-400 dark:bg-slate-900 dark:text-slate-600'
+                    }`}>{v}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      </div>
+
+      {st.stat && (
+        <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
+          {st.stat.label}: <span className="ml-1 inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-emerald-600 px-2 font-mono text-base font-bold text-white">{st.stat.value}</span>
+        </p>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm" aria-label={`${visual.listLabel || 'queue'} contents`}>
         <span className="w-20 shrink-0 font-medium text-slate-700 dark:text-slate-300">{visual.listLabel || 'queue'}</span>

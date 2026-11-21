@@ -67,6 +67,7 @@ const rows = [
   [496, 'next-greater-element-i', 'Next Greater Element I', 'Easy', 'AC'],
   [509, 'fibonacci-number', 'Fibonacci Number', 'Easy', 'AC'],
   [538, 'convert-bst-to-greater-tree', 'Convert BST to Greater Tree', 'Medium', 'AC'],
+  [547, 'number-of-provinces', 'Number of Provinces', 'Medium', 'AC'],
   [581, 'shortest-unsorted-continuous-subarray', 'Shortest Unsorted Continuous Subarray', 'Medium', 'AC'],
   [724, 'find-pivot-index', 'Find Pivot Index', 'Easy', 'AC'],
   [912, 'sort-an-array', 'Sort an Array', 'Medium', 'AC'],

@@ -461,6 +461,131 @@ One pass over the $T$ trust pairs and one pass over the $n$ people: $O(n + T)$ t
       ],
     },
     {
+      id: 'number-of-provinces',
+      title: 'Number of Provinces',
+      difficulty: 'Medium',
+      lc: 'number-of-provinces',
+      from: 'Lec 21 – Graph',
+      tags: ['dfs', 'bfs', 'union-find', 'adjacency-matrix', 'connected-components'],
+      statement: 'There are `n` cities. `isConnected[i][j] = 1` if city `i` and city `j` are directly connected, else `0`. Cities connected directly or through other cities form a **province**. Return the number of provinces.\n\nIn graph words: count the **connected components** of a graph given as an **adjacency matrix**.\n\n**Examples:** `[[1,1,0],[1,1,0],[0,0,1]]` → `2` · `[[1,0,0],[0,1,0],[0,0,1]]` → `3`',
+      visual: {"type": "graph", "title": "DFS over the matrix, one province at a time", "nodes": {"0": [70, 105], "1": [185, 55], "2": [185, 215], "3": [330, 85], "4": [330, 225], "5": [480, 150]}, "edges": [["0", "1"], ["1", "2"], ["3", "4"]], "matrix": [[1, 1, 0, 0, 0, 0], [1, 1, 1, 0, 0, 0], [0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0], [0, 0, 0, 1, 1, 0], [0, 0, 0, 0, 0, 1]], "listLabel": "call stack", "waitingLabel": "visited, still on the call stack", "steps": [{"seen": [], "done": [], "list": [], "tree": [], "stat": {"label": "provinces found", "value": 0}, "code": "findCircleNum(isConnected)", "caption": "6 cities. isConnected[i][j] = 1 means cities i and j are directly connected (the matrix is symmetric, and the diagonal is always 1). Each group of connected cities is one province."}, {"seen": [], "done": [], "list": [], "tree": [], "stat": {"label": "provinces found", "value": 1}, "code": "i = 0: !visited[0] → count++  // count = 1", "caption": "City 0 is not visited, so it starts a new province: count becomes 1. Now visit every city reachable from 0."}, {"seen": ["0"], "done": [], "list": ["0"], "tree": [], "stat": {"label": "provinces found", "value": 1}, "current": "0", "row": 0, "hot": [["0", "1"]], "code": "DFS(n, isConnected, 0, visited)  // visited[0] = true; scan row 0", "caption": "Mark 0 visited and scan row 0: it has 1s in columns 0, 1. Not visited yet: 1, so visit it next."}, {"seen": ["0", "1"], "done": [], "list": ["0", "1"], "tree": [["0", "1"]], "stat": {"label": "provinces found", "value": 1}, "current": "1", "row": 1, "hot": [["1", "0"], ["1", "2"]], "code": "DFS(n, isConnected, 1, visited)  // visited[1] = true; scan row 1", "caption": "Inside the DFS from 0: city 1 is connected and not visited, so DFS(1). Mark 1 visited and scan row 1: it has 1s in columns 0, 1, 2. Not visited yet: 2, so visit it next."}, {"seen": ["0", "1", "2"], "done": [], "list": ["0", "1", "2"], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "provinces found", "value": 1}, "current": "2", "row": 2, "hot": [["2", "1"]], "code": "DFS(n, isConnected, 2, visited)  // visited[2] = true; scan row 2", "caption": "Inside the DFS from 1: city 2 is connected and not visited, so DFS(2). Mark 2 visited and scan row 2: it has 1s in columns 1 and 2. Both are visited already (column 2 is the city itself)."}, {"seen": ["0", "1", "2"], "done": ["2"], "list": ["0", "1"], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "provinces found", "value": 1}, "current": "1", "row": 1, "code": "return  // DFS(2) finished", "caption": "Every city connected to 2 is visited, so DFS(2) returns to DFS(1)."}, {"seen": ["0", "1", "2"], "done": ["2", "1"], "list": ["0"], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "provinces found", "value": 1}, "current": "0", "row": 0, "code": "return  // DFS(1) finished", "caption": "Every city connected to 1 is visited, so DFS(1) returns to DFS(0)."}, {"seen": ["0", "1", "2"], "done": ["2", "1", "0"], "list": [], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "provinces found", "value": 1}, "code": "return  // DFS(0) finished", "caption": "Every city connected to 0 is visited, so DFS(0) returns. This whole province is done."}, {"seen": ["0", "1", "2"], "done": ["2", "1", "0"], "list": [], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "provinces found", "value": 2}, "code": "i = 3: !visited[3] → count++  // count = 2", "caption": "Back in the main loop: cities before 3 are visited. City 3 is not, so it can't be reachable from any province found so far. New province: count becomes 2."}, {"seen": ["0", "1", "2", "3"], "done": ["2", "1", "0"], "list": ["3"], "tree": [["0", "1"], ["1", "2"]], "stat": {"label": "provinces found", "value": 2}, "current": "3", "row": 3, "hot": [["3", "4"]], "code": "DFS(n, isConnected, 3, visited)  // visited[3] = true; scan row 3", "caption": "Mark 3 visited and scan row 3: it has 1s in columns 3, 4. Not visited yet: 4, so visit it next."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["2", "1", "0"], "list": ["3", "4"], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 2}, "current": "4", "row": 4, "hot": [["4", "3"]], "code": "DFS(n, isConnected, 4, visited)  // visited[4] = true; scan row 4", "caption": "Inside the DFS from 3: city 4 is connected and not visited, so DFS(4). Mark 4 visited and scan row 4: it has 1s in columns 3 and 4. Both are visited already (column 4 is the city itself)."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["2", "1", "0", "4"], "list": ["3"], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 2}, "current": "3", "row": 3, "code": "return  // DFS(4) finished", "caption": "Every city connected to 4 is visited, so DFS(4) returns to DFS(3)."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["2", "1", "0", "4", "3"], "list": [], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 2}, "code": "return  // DFS(3) finished", "caption": "Every city connected to 3 is visited, so DFS(3) returns. This whole province is done."}, {"seen": ["0", "1", "2", "3", "4"], "done": ["2", "1", "0", "4", "3"], "list": [], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 3}, "code": "i = 5: !visited[5] → count++  // count = 3", "caption": "Back in the main loop: cities before 5 are visited. City 5 is not, so it can't be reachable from any province found so far. New province: count becomes 3."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0", "4", "3"], "list": ["5"], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 3}, "current": "5", "row": 5, "code": "DFS(n, isConnected, 5, visited)  // visited[5] = true; scan row 5", "caption": "Mark 5 visited and scan row 5: its only 1 is in column 5, the city itself. Nothing else to visit."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0", "4", "3", "5"], "list": [], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 3}, "code": "return  // DFS(5) finished", "caption": "Every city connected to 5 is visited, so DFS(5) returns. This whole province is done."}, {"seen": ["0", "1", "2", "3", "4", "5"], "done": ["2", "1", "0", "4", "3", "5"], "list": [], "tree": [["0", "1"], ["1", "2"], ["3", "4"]], "stat": {"label": "provinces found", "value": 3}, "code": "return count  // 3", "caption": "Every city is visited. The DFS started 3 times, so there are 3 provinces: {0, 1, 2}, {3, 4} and {5}. City 5 is connected only to itself; that is still a province."}]},
+      approaches: [
+        {
+          name: 'BFS for each province',
+          time: 'O(n²)',
+          space: 'O(n)',
+          idea: 'Same counting idea with a queue instead of recursion: every time you find an unvisited city, count a new province and BFS through its row-by-row neighbours.',
+          code: `
+            function findCircleNum(isConnected) {
+              const n = isConnected.length;
+              const visited = new Array(n).fill(false);
+              let count = 0;
+              for (let i = 0; i < n; i++) {
+                if (visited[i]) continue;
+                count++;
+                const queue = [i];
+                visited[i] = true;
+                for (let front = 0; front < queue.length; front++) {
+                  const city = queue[front];
+                  for (let j = 0; j < n; j++) {
+                    if (isConnected[city][j] === 1 && !visited[j]) {
+                      visited[j] = true;
+                      queue.push(j);
+                    }
+                  }
+                }
+              }
+              return count;
+            }
+          `,
+        },
+        {
+          name: 'Union-Find',
+          time: 'O(n² · α(n))',
+          space: 'O(n)',
+          idea: 'Start with `n` separate provinces. For every connection `i–j` (only `j > i` is needed, because the matrix is symmetric), merge their groups. Each merge of two **different** groups removes one province.',
+          code: `
+            function findCircleNum(isConnected) {
+              const n = isConnected.length;
+              const parent = Array.from({ length: n }, (_, i) => i);
+              const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+              let provinces = n;
+              for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                  if (isConnected[i][j] !== 1) continue;
+                  const a = find(i), b = find(j);
+                  if (a !== b) {
+                    parent[a] = b;
+                    provinces--;
+                  }
+                }
+              }
+              return provinces;
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (DFS, LeetCode)',
+          time: 'O(n²)',
+          space: 'O(n)',
+          idea: `
+            Loop over every city; each unvisited city starts a **new province** (\`count++\`), and \`DFS\` marks every city reachable
+            from it. A city's neighbours are the 1s in its **row** of the matrix. Step through the visual above to watch the rows being scanned.
+          `,
+          code: `
+            var findCircleNum = function (isConnected) {
+              let n = isConnected.length;
+              let visited = new Array(n).fill(false);
+              let count = 0;
+
+              function DFS(n, isConnected, source, visited) {
+                visited[source] = true;
+                for (let i = 0; i < n; i++) {
+                  if (isConnected[source][i] == 1) {
+                    if (!visited[i]) {
+                      DFS(n, isConnected, i, visited);
+                    }
+                  }
+                }
+              }
+
+              for (let i = 0; i < n; i++) {
+                if (!visited[i]) {
+                  count++;
+                  DFS(n, isConnected, i, visited);
+                }
+              }
+              return count;
+            };
+          `,
+        },
+      ],
+      explanation: `
+        **This is your DFS traversal with one extra line.** \`dfsTraversal\` already starts a new DFS for each separate piece of
+        the graph. Count how many times it starts (\`count++\`), and you have the number of connected components.
+
+        **Matrix vs adjacency list:** here the neighbours of city \`i\` are the 1s in row \`i\`, so finding them always scans all
+        \`n\` columns. That is why the time is **O(n²)** even when there are few connections. With an adjacency list it would be
+        O(V + E). The matrix is symmetric (\`[i][j] === [j][i]\`) and the diagonal is always 1 (a city is connected to itself),
+        which your \`visited\` check skips naturally.
+
+        **Small cleanup:** \`DFS\` is defined inside \`findCircleNum\`, so it can use \`n\`, \`isConnected\` and \`visited\` directly.
+        It only needs one parameter: \`function DFS(source)\`.
+
+        **Same pattern, other problems:** Number of Islands (a grid instead of a matrix of cities), Number of Connected Components
+        (LC 323, an edge list), and Redundant Connection (Union-Find), all on this topic page.
+      `,
+      fn: 'findCircleNum',
+      tests: [
+        { args: [[[1, 1, 0], [1, 1, 0], [0, 0, 1]]], expected: 2 },
+        { args: [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]], expected: 3, label: 'no connections' },
+        { args: [[[1, 1, 0, 0, 0, 0], [1, 1, 1, 0, 0, 0], [0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0], [0, 0, 0, 1, 1, 0], [0, 0, 0, 0, 0, 1]]], expected: 3, label: 'the example in the visual' },
+        { args: [[[1, 1, 0, 0], [1, 1, 1, 0], [0, 1, 1, 1], [0, 0, 1, 1]]], expected: 1, label: 'a chain: connected through other cities' },
+        { args: [[[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]], expected: 1 },
+        { args: [[[1]]], expected: 1, label: 'one city' },
+      ],
+    },
+    {
       id: 'number-of-islands',
       title: 'Number of Islands',
       difficulty: 'Medium',
