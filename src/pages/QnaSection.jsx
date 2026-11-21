@@ -24,7 +24,7 @@ export function QnaItem({ item, uid, defaultOpen = false, context, focusKey }) {
     }
   }, [defaultOpen, focusKey]);
   return (
-    <li ref={ref} id={`item-${uid.replace(/[^a-z0-9]+/gi, '-')}`} className="scroll-mt-28">
+    <li ref={ref} id={`item-${uid.replace(/[^a-z0-9]+/gi, '-')}`} className="scroll-mt-40">
       <div className="flex items-start gap-3 py-3">
         <div className="pt-0.5">
           <StatusButton status={st} onClick={() => p.toggleDone(uid)} title={item.q} />
@@ -82,7 +82,7 @@ export default function QnaSection({ section }) {
       <SectionTabs label="Concept areas" tabs={sections.map((s) => ({ to: `/${s.id}`, label: areaLabel[s.id] || s.title, active: s.id === section.id }))} />
       <div className="flex gap-10">
         <aside className="hidden w-56 shrink-0 lg:block" aria-label={`${section.title} topics`}>
-          <div className="sticky top-20 max-h-[calc(100vh-6rem)] space-y-0.5 overflow-y-auto pr-2">
+          <div className={`sticky ${catId ? 'top-[124px] max-h-[calc(100vh-8.5rem)]' : 'top-20 max-h-[calc(100vh-6rem)]'} space-y-0.5 overflow-y-auto pr-2`}>
             <NavLink end to={`/${section.id}`} className={linkCls}>All questions</NavLink>
             {section.categories.map((c) => {
               const ids = c.items.map((i) => `${section.id}:${i.id}`);

@@ -175,7 +175,7 @@ export default function DsaQuestion() {
           </section>
         )}
 
-        <section id="notes" aria-label="Your notes" className="scroll-mt-20 rounded-xl bg-slate-50 p-5 dark:bg-slate-900">
+        <section id="notes" aria-label="Your notes" className="scroll-mt-32 rounded-xl bg-slate-50 p-5 dark:bg-slate-900">
           <NotesBox id={uid} value={p.note(uid)} onSave={(text) => p.setNote(uid, text)} />
         </section>
 
@@ -186,6 +186,9 @@ export default function DsaQuestion() {
               <span className="block truncate font-medium text-slate-900 group-hover:text-indigo-700 dark:text-white">{prev.title}</span>
             </Link>
           ) : <span />}
+          <Link to={`/dsa/${t.id}`} className="shrink-0 self-center rounded-lg border border-slate-200 px-3 py-2 text-center font-medium text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+            All {t.title} problems
+          </Link>
           {next ? (
             <Link to={`/dsa/${t.id}/${next.id}`} className="group min-w-0 text-right">
               <span className="block text-xs text-slate-600 dark:text-slate-400">Next</span>

@@ -14,7 +14,7 @@ const anchor = (id) => `item-${id.replace(/[^a-z0-9]+/gi, '-')}`;
 function H2({ id, children, sub }) {
   return (
     <div className="mb-4">
-      <h2 id={id} className="scroll-mt-28 text-xl font-semibold text-slate-900 dark:text-white">{children}</h2>
+      <h2 id={id} className="scroll-mt-40 text-xl font-semibold text-slate-900 dark:text-white">{children}</h2>
       {sub && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{sub}</p>}
     </div>
   );
@@ -142,7 +142,7 @@ function StudyGroup({ g, p, open }) {
           const it = itemById.get(id); // a DSA problem: it needs the code runner, so it opens its own page
           if (!it) return null;
           return (
-            <li key={id} id={anchor(id)} className="flex scroll-mt-28 items-center gap-3 py-3">
+            <li key={id} id={anchor(id)} className="flex scroll-mt-40 items-center gap-3 py-3">
               <StatusButton status={p.status(id)} onClick={() => p.toggleDone(id)} title={it.title} />
               <Link to={it.to} className="min-w-0 flex-1 text-[15px] font-medium text-slate-900 hover:text-indigo-700 dark:text-white dark:hover:text-indigo-300">{it.title}</Link>
               <Badge className={diffColor[it.difficulty]}>{it.difficulty}</Badge>
@@ -210,7 +210,7 @@ export default function InterviewPrep() {
         </div>
       </Card>
 
-      <nav aria-label="On this page" className="sticky top-14 z-10 -mx-4 mt-6 overflow-x-auto border-b border-slate-200 bg-slate-50/95 px-4 backdrop-blur sm:mx-0 sm:px-0 dark:border-slate-800 dark:bg-slate-950/95">
+      <nav aria-label="On this page" className="sticky top-[108px] z-10 -mx-4 mt-6 overflow-x-auto border-b border-slate-200 bg-slate-50/95 px-4 backdrop-blur sm:mx-0 sm:px-0 dark:border-slate-800 dark:bg-slate-950/95">
         <ul className="flex gap-5 py-2.5 text-sm">
           {sections.map(([id, label]) => (
             <li key={id} className="shrink-0">

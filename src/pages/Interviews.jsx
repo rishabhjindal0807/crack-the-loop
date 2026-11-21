@@ -313,7 +313,7 @@ export default function Interviews() {
       <p className="mb-5 text-sm text-slate-600 dark:text-slate-400">Log them right after each round, while you still remember them, and link each one to the matching problem or concept here.</p>
 
       {editing && (
-        <div id="log-form" className="mb-10 scroll-mt-20">
+        <div id="log-form" className="mb-10 scroll-mt-32">
           <EntryForm initial={editing} companies={companies} onSave={save} onCancel={close} />
         </div>
       )}

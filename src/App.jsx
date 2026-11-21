@@ -72,7 +72,7 @@ function BackBar() {
   const parent = [...crumbs].reverse().find((c) => c.to);
   const inApp = (window.history.state?.idx ?? 0) > 0;
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div className="sticky top-14 z-20 -mx-4 mb-6 flex h-[52px] items-center gap-x-4 border-b border-slate-200 bg-slate-50/95 px-4 backdrop-blur sm:-mt-2 dark:border-slate-800 dark:bg-slate-950/95">
       <button
         onClick={() => (inApp ? nav(-1) : nav(parent.to))}
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white pl-2 pr-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -80,12 +80,12 @@ function BackBar() {
         <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M12 5 7 10l5 5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Back
       </button>
-      <nav aria-label="Breadcrumb" className="min-w-0 text-sm text-slate-600 dark:text-slate-400">
-        <ol className="flex flex-wrap items-center gap-1.5">
+      <nav aria-label="Breadcrumb" className="min-w-0 truncate text-sm text-slate-600 dark:text-slate-400">
+        <ol className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
           {crumbs.map((c, i) => (
             <li key={i} className="flex items-center gap-1.5">
               {i > 0 && <span aria-hidden="true">/</span>}
-              {c.to ? <Link to={c.to} className="hover:text-slate-900 hover:underline dark:hover:text-white">{c.label}</Link> : <span>{c.label}</span>}
+              {c.to ? <Link to={c.to} className="truncate hover:text-slate-900 hover:underline dark:hover:text-white">{c.label}</Link> : <span className="truncate">{c.label}</span>}
             </li>
           ))}
         </ol>
