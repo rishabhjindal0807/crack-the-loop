@@ -409,6 +409,95 @@ export default {
       ],
     },
     {
+      id: 'build-tree-preorder-inorder',
+      title: 'Construct Binary Tree from Preorder and Inorder Traversal',
+      difficulty: 'Medium',
+      lc: 'construct-binary-tree-from-preorder-and-inorder-traversal',
+      from: 'IL10 – Trees 1 & BST',
+      tags: ['recursion', 'divide-and-conquer', 'hash-map', 'traversals'],
+      statement: 'Given `preorder` and `inorder` traversals of the same binary tree (all values are unique), rebuild the tree and return its root.\n\n**Example:** `preorder = [3,9,20,15,7]`, `inorder = [9,3,15,20,7]` → `[3,9,20,null,null,15,7]`',
+      visual: {"type": "tree-build", "title": "Build the tree: preorder gives the root, inorder gives the split", "preorder": [3, 9, 1, 2, 20, 15, 7], "inorder": [1, 9, 2, 3, 15, 20, 7], "parent": {"3": null, "9": 3, "1": 9, "2": 9, "20": 3, "15": 20, "7": 20}, "depth": {"3": 0, "9": 1, "1": 2, "2": 2, "20": 1, "15": 2, "7": 2}, "steps": [{"built": [], "pre": [0, 6], "ins": [0, 6], "code": "buildTree(preorder, inorder)", "caption": "Two facts do all the work. Preorder is root, then left subtree, then right subtree, so its FIRST value is always the root. Inorder is left subtree, then root, then right subtree, so the root SPLITS it into the two sides."}, {"root": 3, "pre": [0, 6], "ins": [0, 6], "idx": 3, "built": [3], "code": "root = 3;  index = inorder.indexOf(3)  // 3;  count = 3 − 0 = 3", "caption": "The first value in this preorder part is 3, so 3 is the root. Find 3 in inorder (index 3): [1, 9, 2] on its left goes to the left subtree, [15, 20, 7] on its right goes to the right subtree. The left side has count = 3 nodes, so in preorder the next 3 values [9, 1, 2] belong to the left subtree and [20, 15, 7] to the right."}, {"root": 9, "pre": [1, 3], "ins": [0, 2], "idx": 1, "built": [3, 9], "code": "root = 9;  index = inorder.indexOf(9)  // 1;  count = 1 − 0 = 1", "caption": "The first value in this preorder part is 9, so 9 is the root. Find 9 in inorder (index 1): [1] on its left goes to the left subtree, [2] on its right goes to the right subtree. The left side has count = 1 node, so in preorder the next 1 value [1] belong to the left subtree and [2] to the right."}, {"root": 1, "pre": [2, 2], "ins": [0, 0], "idx": 0, "built": [3, 9, 1], "code": "root = 1;  index = inorder.indexOf(1)  // 0;  count = 0 − 0 = 0", "caption": "The first value in this preorder part is 1, so 1 is the root here. In inorder it has nothing on either side, so it is a leaf: both calls below get an empty range and return null."}, {"root": 2, "pre": [3, 3], "ins": [2, 2], "idx": 2, "built": [3, 9, 1, 2], "code": "root = 2;  index = inorder.indexOf(2)  // 2;  count = 2 − 2 = 0", "caption": "The first value in this preorder part is 2, so 2 is the root here. In inorder it has nothing on either side, so it is a leaf: both calls below get an empty range and return null."}, {"root": 20, "pre": [4, 6], "ins": [4, 6], "idx": 5, "built": [3, 9, 1, 2, 20], "code": "root = 20;  index = inorder.indexOf(20)  // 5;  count = 5 − 4 = 1", "caption": "The first value in this preorder part is 20, so 20 is the root. Find 20 in inorder (index 5): [15] on its left goes to the left subtree, [7] on its right goes to the right subtree. The left side has count = 1 node, so in preorder the next 1 value [15] belong to the left subtree and [7] to the right."}, {"root": 15, "pre": [5, 5], "ins": [4, 4], "idx": 4, "built": [3, 9, 1, 2, 20, 15], "code": "root = 15;  index = inorder.indexOf(15)  // 4;  count = 4 − 4 = 0", "caption": "The first value in this preorder part is 15, so 15 is the root here. In inorder it has nothing on either side, so it is a leaf: both calls below get an empty range and return null."}, {"root": 7, "pre": [6, 6], "ins": [6, 6], "idx": 6, "built": [3, 9, 1, 2, 20, 15, 7], "code": "root = 7;  index = inorder.indexOf(7)  // 6;  count = 6 − 6 = 0", "caption": "The first value in this preorder part is 7, so 7 is the root here. In inorder it has nothing on either side, so it is a leaf: both calls below get an empty range and return null."}, {"built": [3, 9, 1, 2, 20, 15, 7], "pre": [0, 6], "ins": [0, 6], "code": "return root  // [3, 9, 20, 1, 2, 15, 7]", "caption": "Every value became a node exactly once. Notice each node sits right above its place in the inorder array: reading the tree left to right gives the inorder order back."}]},
+      approaches: [
+        {
+          name: 'Hash map for the inorder index (O(n))',
+          time: 'O(n)',
+          space: 'O(n)',
+          idea: 'Same split, but look up the root\'s inorder index in a **Map** built once, instead of `indexOf` every time. A single `preIndex` pointer walks through preorder, because preorder visits roots in exactly the order the recursion needs them (root, then the whole left side, then the right side).',
+          code: `
+            function buildTree(preorder, inorder) {
+              const where = new Map(inorder.map((v, i) => [v, i])); // value -> inorder index
+              let preIndex = 0;
+              function build(inStart, inEnd) {
+                if (inStart > inEnd) return null;
+                const rootVal = preorder[preIndex++];
+                const root = new TreeNode(rootVal);
+                const mid = where.get(rootVal);
+                root.left = build(inStart, mid - 1);  // must build left first: preorder is root, left, right
+                root.right = build(mid + 1, inEnd);
+                return root;
+              }
+              return build(0, inorder.length - 1);
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (LeetCode)',
+          time: 'O(n²) worst case (indexOf)',
+          space: 'O(n)',
+          idea: `
+            The first value of the current preorder range is the root. Find it in inorder: the \`count = index − inStart\` values on
+            its left form the left subtree, so in preorder the left subtree is the next \`count\` values and the right subtree is
+            everything after. Recurse on both sides. Step through the visual above.
+          `,
+          code: `
+            var buildTree = function (preorder, inorder) {
+
+              function helper(preorder, inorder, inStart, inEnd, preStart, preEnd) {
+
+                if (inStart > inEnd || preStart > preEnd) return null;
+
+                let index = inorder.indexOf(preorder[preStart]);
+                let root = new TreeNode(preorder[preStart]);
+                let count = index - inStart;
+                root.left = helper(preorder, inorder, inStart, index - 1, preStart + 1, preEnd + count);
+                root.right = helper(preorder, inorder, index + 1, inEnd, preStart + count + 1, preEnd);
+                return root;
+
+              }
+              return helper(preorder, inorder, 0, inorder.length - 1, 0, preorder.length - 1);
+            };
+          `,
+        },
+      ],
+      explanation: `
+        **One small fix to your code.** In the left call, the preorder range should end at \`preStart + count\`, not \`preEnd + count\`.
+        The left subtree is exactly the \`count\` values right after the root. Your version still passes because the inorder check
+        \`inStart > inEnd\` is what really stops the recursion, and only \`preStart\` is ever read, so the wrong end is never used.
+        It's worth fixing anyway: an interviewer reading it will ask.
+
+        **Make it O(n):** \`inorder.indexOf\` scans the array on every call, so a skewed tree (like a linked list) costs O(n²).
+        Build a \`Map\` from value to index once (first approach above). You can also drop the preorder range completely and use
+        one moving \`preIndex\`.
+
+        **Why it needs unique values:** the split depends on finding the root's exact position in inorder. With duplicates, the
+        position is ambiguous and the tree can't be rebuilt reliably.
+
+        **Related questions:**
+        - **Inorder + postorder (LC 106):** the root is the **last** value of postorder. Build the **right** subtree first when walking postorder backwards.
+        - **Preorder + postorder (LC 889):** not enough on its own to pin down a unique tree, unless every node has 0 or 2 children.
+        - **Preorder of a BST alone (LC 1008):** enough, because the BST order gives you the inorder for free.
+      `,
+      fn: 'buildTree',
+      output: (r, H) => H.level(r),
+      tests: [
+        { args: [[3, 9, 20, 15, 7], [9, 3, 15, 20, 7]], expected: [3, 9, 20, null, null, 15, 7] },
+        { args: [[-1], [-1]], expected: [-1], label: 'one node' },
+        { args: [[3, 9, 1, 2, 20, 15, 7], [1, 9, 2, 3, 15, 20, 7]], expected: [3, 9, 20, 1, 2, 15, 7], label: 'the tree in the visual' },
+        { args: [[1, 2, 3, 4], [4, 3, 2, 1]], expected: [1, 2, null, 3, null, 4], label: 'only left children (worst case for indexOf)' },
+        { args: [[1, 2, 3], [1, 2, 3]], expected: [1, null, 2, null, 3], label: 'only right children' },
+      ],
+    },
+    {
       id: 'diameter',
       title: 'Diameter of Binary Tree',
       difficulty: 'Easy',
