@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 //     hot: [[a, b]],      // edges looked at in this step (orange)
 //     found: id,          // destination reached
 //     result: [ids],      // output so far (traversals)
+//     labels: { [id]: text },   // per-step text under nodes (overrides visual.labels)
 //     row: index,         // matrix row being scanned
 //     stat: { label, value },  // a counter, e.g. provinces found so far
 //     code, caption,
@@ -90,8 +91,9 @@ export default function GraphVisual({ visual }) {
             <g key={id}>
               <circle cx={x} cy={y} r={R} strokeWidth={st.current === id || st.found === id ? 3 : 2} className={nodeStyle(id)} />
               <text x={x} y={y + 6} textAnchor="middle" fontSize="16" fontWeight="700" className={textStyle(id)}>{id}</text>
-              {visual.labels?.[id] && (
-                <text x={x} y={y + R + 18} textAnchor="middle" fontSize="12" fontWeight="600" className="fill-slate-600 dark:fill-slate-400">{visual.labels[id]}</text>
+              {(st.labels || visual.labels)?.[id] && (
+                <text x={x} y={y + R + 18} textAnchor="middle" fontSize="12" fontWeight="600"
+                  className={/✗/.test((st.labels || visual.labels)[id]) ? 'fill-rose-700 dark:fill-rose-300' : 'fill-slate-600 dark:fill-slate-400'}>{(st.labels || visual.labels)[id]}</text>
               )}
             </g>
           ))}
@@ -127,7 +129,7 @@ export default function GraphVisual({ visual }) {
 
       {st.stat && (
         <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
-          {st.stat.label}: <span className="ml-1 inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-emerald-600 px-2 font-mono text-base font-bold text-white">{st.stat.value}</span>
+          {st.stat.label}: <span className={`ml-1 inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono text-base font-bold text-white ${st.stat.value === 'no' ? 'bg-rose-600' : st.stat.value === '?' ? 'bg-slate-500' : 'bg-emerald-600'}`}>{st.stat.value}</span>
         </p>
       )}
 

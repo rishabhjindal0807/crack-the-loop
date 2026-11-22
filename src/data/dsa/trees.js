@@ -572,30 +572,81 @@ export default {
       title: 'Validate Binary Search Tree',
       difficulty: 'Medium',
       lc: 'validate-binary-search-tree',
-      tags: ['bst', 'bounds'],
-      statement: 'Return true if the tree is a valid BST (strictly increasing inorder).',
+      from: 'IL10 – Trees 1 & BST',
+      tags: ['bst', 'bounds', 'inorder', 'recursion'],
+      statement: 'Return `true` if the tree is a valid **binary search tree**: every node in the left subtree is **strictly less** than the node, every node in the right subtree is **strictly greater**, and both subtrees are BSTs too.\n\n**Examples:** `[2,1,3]` → `true` · `[5,1,4,null,null,3,6]` → `false` (4 is in 5\'s right subtree but smaller than 5)',
+      visual: {"type": "graph", "title": "Each node must fit in the range set by ALL its ancestors", "nodes": {"5": [280, 55], "4": [150, 145], "6": [410, 145], "3": [330, 240], "7": [490, 240]}, "edges": [["5", "4"], ["5", "6"], ["6", "3"], ["6", "7"]], "listLabel": "call stack", "waitingLabel": "checked, children still to check", "steps": [{"seen": [], "done": [], "list": [], "tree": [], "stat": {"label": "valid BST", "value": "?"}, "code": "isValidBST(root)  // [5, 4, 6, null, null, 3, 7]", "caption": "Check each node only against its own children and this looks fine: 4 < 5 < 6, and 3 < 6 < 7. But 3 is in the RIGHT subtree of 5, so it must be greater than 5. A node must respect ALL its ancestors, not just its parent."}, {"seen": ["5"], "done": [], "current": "5", "list": ["5"], "tree": [], "labels": {"5": "(−∞, ∞)"}, "stat": {"label": "valid BST", "value": "?"}, "code": "BSTUtil(5, -Infinity, Infinity)  // -∞ < 5 < ∞ ✓", "caption": "The root can be anything: its range is (−∞, ∞). 5 is inside, so check its children. Left child gets max = 5, right child gets min = 5."}, {"seen": ["5", "4"], "done": [], "current": "4", "list": ["5", "4"], "tree": [["5", "4"]], "hot": [["5", "4"]], "labels": {"5": "(−∞, ∞)", "4": "(−∞, 5)"}, "stat": {"label": "valid BST", "value": "?"}, "code": "BSTUtil(4, -Infinity, 5)  // -∞ < 4 < 5 ✓", "caption": "Going LEFT from 5, everything must be less than 5: range (−∞, 5). 4 is inside. Its children are null, so this side returns true."}, {"seen": ["5", "4", "6"], "done": ["4"], "current": "6", "list": ["5", "6"], "tree": [["5", "4"], ["5", "6"]], "hot": [["5", "6"]], "labels": {"5": "(−∞, ∞)", "4": "(−∞, 5)", "6": "(5, ∞)"}, "stat": {"label": "valid BST", "value": "?"}, "code": "BSTUtil(6, 5, Infinity)  // 5 < 6 < ∞ ✓", "caption": "Going RIGHT from 5, everything must be greater than 5: range (5, ∞). 6 is inside. Its left child gets max = 6, but the min stays 5."}, {"seen": ["5", "4", "6", "3"], "done": ["4"], "current": "3", "list": ["5", "6", "3"], "tree": [["5", "4"], ["5", "6"], ["6", "3"]], "hot": [["6", "3"]], "labels": {"5": "(−∞, ∞)", "4": "(−∞, 5)", "6": "(5, ∞)", "3": "(5, 6) ✗"}, "stat": {"label": "valid BST", "value": "no"}, "code": "BSTUtil(3, 5, 6)  // 3 <= min (5) → return false", "caption": "3 inherits BOTH limits: greater than 5 (from the root) and less than 6 (from its parent). 3 is not greater than 5, so this is not a BST. The min of 5 is exactly what catches the trap."}, {"seen": ["5", "4", "6", "3"], "done": ["4", "3"], "list": [], "tree": [["5", "4"], ["5", "6"], ["6", "3"]], "labels": {"5": "(−∞, ∞)", "4": "(−∞, 5)", "6": "(5, ∞)", "3": "(5, 6) ✗"}, "stat": {"label": "valid BST", "value": "no"}, "code": "return false  // && stops early: 7 is never checked", "caption": "false travels back up through the && in each call, so 7 is never visited. Fix the tree by changing 3 to something between 5 and 6, and every check passes."}]},
       approaches: [
         {
-          name: 'Min/max bounds',
+          name: 'Inorder must be strictly increasing',
           time: 'O(n)',
           space: 'O(h)',
-          idea: 'Each node must lie in `(low, high)` inherited from **all** ancestors.',
+          idea: 'An inorder walk of a BST visits values in **sorted order**. Walk the tree inorder, remember the previous value, and fail as soon as a value is not greater than the one before it.',
           code: `
-            function isValidBST(root, low = -Infinity, high = Infinity) {
-              if (!root) return true;
-              if (root.val <= low || root.val >= high) return false;
-              return isValidBST(root.left, low, root.val) && isValidBST(root.right, root.val, high);
+            function isValidBST(root) {
+              let prev = -Infinity;
+              function inorder(node) {
+                if (!node) return true;
+                if (!inorder(node.left)) return false;
+                if (node.val <= prev) return false; // must be strictly increasing
+                prev = node.val;
+                return inorder(node.right);
+              }
+              return inorder(root);
             }
           `,
         },
+        {
+          name: 'Your accepted solution (min/max range, LeetCode)',
+          time: 'O(n)',
+          space: 'O(h) recursion',
+          idea: `
+            Pass down the **range** each node must fit in. Going left, the current value becomes the new **max**; going right, it
+            becomes the new **min**. Each node is checked against limits from **all** its ancestors, not just its parent. Step
+            through the visual above to see the trap it catches.
+          `,
+          code: `
+            var isValidBST = function (root) {
+
+              function BSTUtil(root, min, max) {
+                if (root == null) return true;
+                let val = root.val;
+                if (val <= min || val >= max) return false;
+                return BSTUtil(root.left, min, val) && BSTUtil(root.right, val, max);
+              }
+
+              return BSTUtil(root, -Infinity, Infinity);
+            };
+          `,
+        },
       ],
-      explanation: 'Classic trap: `[5,4,6,null,null,3,7]` — 3 is a valid child of 6 but violates the root bound.',
+      explanation: `
+        **The trap interviewers use:** checking only \`node.left.val < node.val < node.right.val\` is **wrong**. In
+        \`[5,4,6,null,null,3,7]\` every parent–child pair passes, but 3 sits in 5's right subtree. Your range method catches it
+        because 3 inherits min = 5 from the root.
+
+        **Why \`-Infinity\` / \`Infinity\` and not \`Number.MIN_SAFE_INTEGER\` / \`MAX\`:** node values can be as large as
+        2³¹ − 1, and a "sentinel" like \`2147483647\` would wrongly reject a real node with that value. Infinity can never equal a
+        real value. (In Java or C++, people use \`long\` or \`null\` for the same reason.)
+
+        **Strictly less / greater:** \`<=\` and \`>=\` in your check mean duplicates make it invalid. \`[2,2,2]\` returns false.
+        Some interviewers allow duplicates on one side, so ask.
+
+        **Which approach to say:** both are O(n). The range method explains the rule directly; the inorder one uses a fact worth
+        remembering: **a tree is a BST exactly when its inorder traversal is strictly increasing**. That same fact solves Kth
+        Smallest in a BST and Recover BST on this page.
+      `,
       fn: 'isValidBST',
       input: tree,
       tests: [
         { args: [[2, 1, 3]], expected: true },
         { args: [[5, 1, 4, null, null, 3, 6]], expected: false },
-        { args: [[5, 4, 6, null, null, 3, 7]], expected: false },
+        { args: [[5, 4, 6, null, null, 3, 7]], expected: false, label: 'the trap in the visual: valid parent–child pairs, invalid tree' },
+        { args: [[2, 2, 2]], expected: false, label: 'duplicates are not allowed' },
+        { args: [[2147483647]], expected: true, label: 'the largest possible value' },
+        { args: [[-2147483648, null, 2147483647]], expected: true, label: 'both extremes' },
+        { args: [[3, 1, 5, 0, 2, 4, 6]], expected: true, label: 'a full valid BST' },
+        { args: [[1]], expected: true, label: 'one node' },
       ],
     },
     {

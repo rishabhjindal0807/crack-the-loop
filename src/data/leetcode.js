@@ -34,6 +34,7 @@ const rows = [
   [78, 'subsets', 'Subsets', 'Medium', 'AC'],
   [83, 'remove-duplicates-from-sorted-list', 'Remove Duplicates from Sorted List', 'Easy', 'AC'],
   [88, 'merge-sorted-array', 'Merge Sorted Array', 'Easy', 'AC'],
+  [98, 'validate-binary-search-tree', 'Validate Binary Search Tree', 'Medium', 'AC'],
   [99, 'recover-binary-search-tree', 'Recover Binary Search Tree', 'Medium', 'AC'],
   [105, 'construct-binary-tree-from-preorder-and-inorder-traversal', 'Construct Binary Tree from Preorder and Inorder Traversal', 'Medium', 'AC'],
   [121, 'best-time-to-buy-and-sell-stock', 'Best Time to Buy and Sell Stock', 'Easy', 'AC'],
