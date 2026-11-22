@@ -2,7 +2,7 @@ import { allQuestions, topicById } from './dsa/index.js';
 
 // Bosscoder Module 1 — every lecture (Lec) and instructor-led session (IL), grouped into units.
 // `current` marks the class you're on right now; update it as the module moves on.
-export const current = 'lec-21';
+export const current = 'il-10';
 
 export const units = [
   {
@@ -177,7 +177,7 @@ export const schedule = {
   'lec-15': ['2026-10-25', 'A'], 'lec-16': ['2026-10-31', 'P'], 'lec-17': ['2026-11-01', 'P'], 'il-7': ['2026-11-05', 'P'],
   'lec-18': ['2026-11-07', 'P'], 'il-8': ['2026-11-12', 'P'], 'lec-19': ['2026-11-14', 'P'], 'lec-20': ['2026-11-15', 'P'],
   'il-9': ['2026-11-19', 'P'],
-  'lec-21': ['2026-11-21', null, '11:00 AM', 'Nimish Gupta'],
+  'lec-21': ['2026-11-21', 'P'],
   'il-10': ['2026-11-22', null, '11:00 AM', 'Nimish Gupta'],
 };
 

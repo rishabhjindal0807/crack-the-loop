@@ -7,6 +7,7 @@ import MathMarkdown from '../lib/MathMarkdown.jsx';
 import CodeBlock from '../components/CodeBlock.jsx';
 import LinkedListVisual from '../components/LinkedListVisual.jsx';
 import GraphVisual from '../components/GraphVisual.jsx';
+import TreeViews from '../components/TreeViews.jsx';
 import { figures } from '../components/ProofFigures.jsx';
 import { useProgress } from '../lib/progress.js';
 import { runTests } from '../lib/runner.js';
@@ -128,7 +129,9 @@ export default function DsaQuestion() {
                 </div>
               )}
               {visuals[vi].title && <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">{visuals[vi].title}</p>}
-              {visuals[vi].type === 'graph' ? (
+              {visuals[vi].type === 'tree-views' ? (
+                <TreeViews key={`${uid}-${vi}`} visual={visuals[vi]} />
+              ) : visuals[vi].type === 'graph' ? (
                 <GraphVisual key={`${uid}-${vi}`} visual={visuals[vi]} />
               ) : (
                 <LinkedListVisual key={`${uid}-${vi}`} visual={visuals[vi]} uid={`${uid}-${vi}`} />

@@ -49,6 +49,7 @@ const rows = [
   [190, 'reverse-bits', 'Reverse Bits', 'Easy', 'AC'],
   [191, 'number-of-1-bits', 'Number of 1 Bits', 'Easy', 'AC'],
   [198, 'house-robber', 'House Robber', 'Medium', 'WA'],
+  [199, 'binary-tree-right-side-view', 'Binary Tree Right Side View', 'Medium', 'AC'],
   [208, 'implement-trie-prefix-tree', 'Implement Trie (Prefix Tree)', 'Medium', 'AC'],
   [217, 'contains-duplicate', 'Contains Duplicate', 'Easy', 'AC'],
   [230, 'kth-smallest-element-in-a-bst', 'Kth Smallest Element in a BST', 'Medium', 'AC'],
