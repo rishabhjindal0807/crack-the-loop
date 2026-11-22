@@ -56,6 +56,7 @@ const rows = [
   [217, 'contains-duplicate', 'Contains Duplicate', 'Easy', 'AC'],
   [230, 'kth-smallest-element-in-a-bst', 'Kth Smallest Element in a BST', 'Medium', 'AC'],
   [231, 'power-of-two', 'Power of Two', 'Easy', 'AC'],
+  [235, 'lowest-common-ancestor-of-a-binary-search-tree', 'Lowest Common Ancestor of a Binary Search Tree', 'Medium', 'AC'],
   [240, 'search-a-2d-matrix-ii', 'Search a 2D Matrix II', 'Medium', 'AC'],
   [279, 'perfect-squares', 'Perfect Squares', 'Medium', 'AC'],
   [287, 'find-the-duplicate-number', 'Find the Duplicate Number', 'Medium', 'TLE'],

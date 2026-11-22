@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 // }
 
 const R = 22;
-const W = 560, H = 300;
+const W = 560;
 const key = (a, b) => [a, b].sort().join('-');
 
 export default function GraphVisual({ visual }) {
@@ -43,6 +43,7 @@ export default function GraphVisual({ visual }) {
     return () => clearTimeout(t);
   }, [playing, i, steps.length]);
 
+  const H = visual.height || 300;
   const st = steps[i];
   const seen = new Set(st.seen || []);
   const done = new Set(st.done || []);

@@ -533,6 +533,87 @@ export default {
       ],
     },
     {
+      id: 'lca-bst',
+      title: 'Lowest Common Ancestor of a Binary Search Tree',
+      difficulty: 'Medium',
+      lc: 'lowest-common-ancestor-of-a-binary-search-tree',
+      from: 'IL10 – Trees 1 & BST',
+      tags: ['bst', 'lca', 'recursion'],
+      statement: 'Given a **BST** and two nodes `p` and `q` in it, return their **lowest common ancestor**: the lowest node that has both `p` and `q` as descendants (a node counts as a descendant of itself).\n\n**Examples** (tree `[6,2,8,0,4,7,9,null,null,3,5]`): `p = 2, q = 8` → `6` · `p = 2, q = 4` → `2`\n\n*(Tests pass the values of p and q; the test adapter finds the nodes.)*',
+      visual: {"type": "graph", "title": "Walk down from the root until p and q split", "height": 330, "nodes": {"6": [280, 40], "2": [150, 120], "8": [410, 120], "0": [85, 205], "4": [215, 205], "7": [345, 205], "9": [475, 205], "3": [165, 290], "5": [265, 290]}, "edges": [["6", "2"], ["6", "8"], ["2", "0"], ["2", "4"], ["8", "7"], ["8", "9"], ["4", "3"], ["4", "5"]], "listLabel": "call stack", "waitingLabel": "on the path", "steps": [{"seen": [], "done": [], "list": [], "tree": [], "labels": {"3": "p = 3", "5": "q = 5"}, "code": "lowestCommonAncestor(root, p = 3, q = 5)", "caption": "In a BST, everything left of a node is smaller and everything right is bigger. So comparing p and q with the current node tells you exactly which side both of them are on, with no searching."}, {"seen": ["6"], "done": [], "current": "6", "list": ["6"], "tree": [], "hot": [["6", "2"]], "labels": {"3": "p = 3", "5": "q = 5"}, "code": "p.val (3) < 6 && q.val (5) < 6  →  go left", "caption": "Both 3 and 5 are smaller than 6, so both are in 6's LEFT subtree. A lower common ancestor must be down there too. The whole right side (8, 7, 9) is never looked at."}, {"seen": ["6", "2"], "done": ["6"], "current": "2", "list": ["6", "2"], "tree": [["6", "2"]], "hot": [["2", "4"]], "labels": {"3": "p = 3", "5": "q = 5"}, "code": "p.val (3) > 2 && q.val (5) > 2  →  go right", "caption": "Both are bigger than 2, so both are in 2's RIGHT subtree. Skip 0 and go right."}, {"seen": ["6", "2", "4"], "done": ["6", "2"], "current": "4", "found": "4", "list": ["6", "2", "4"], "tree": [["6", "2"], ["2", "4"]], "labels": {"3": "p = 3", "5": "q = 5"}, "code": "3 < 4 < 5  →  else: return root (4)", "caption": "Now p is on the left of 4 and q is on the right: they split here. Any node lower down would contain only one of them, so 4 is the LOWEST common ancestor."}, {"seen": ["6", "2", "4"], "done": ["6", "2", "4"], "found": "4", "list": [], "tree": [["6", "2"], ["2", "4"]], "labels": {"3": "p = 3", "5": "q = 5"}, "code": "return 4  // visited 3 nodes = the height, not the whole tree", "caption": "Other cases hit the same else branch. p = 2, q = 8: they split at the root, so the answer is 6. p = 2, q = 4: 2 equals p, so 2 is the answer (a node counts as its own ancestor)."}]},
+      approaches: [
+        {
+          name: 'Iterative walk (O(1) extra space)',
+          time: 'O(h)',
+          space: 'O(1)',
+          idea: 'Your recursion only ever makes one call, the last thing it does, so it turns into a loop with no call stack: move left or right until p and q split.',
+          code: `
+            function lowestCommonAncestor(root, p, q) {
+              let node = root;
+              while (node) {
+                if (p.val < node.val && q.val < node.val) node = node.left;
+                else if (p.val > node.val && q.val > node.val) node = node.right;
+                else return node; // they split here, or one of them IS this node
+              }
+              return null;
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (recursive, LeetCode)',
+          time: 'O(h)',
+          space: 'O(h) recursion',
+          idea: `
+            If both values are smaller than the root, the answer is in the left subtree; if both are bigger, it's in the right
+            subtree. Otherwise they split at this node (or one of them is this node), so this node is the answer. Step through
+            the visual above.
+          `,
+          code: `
+            var lowestCommonAncestor = function (root, p, q) {
+              if (root == null) return null;
+              if (p.val < root.val && q.val < root.val) {
+                return lowestCommonAncestor(root.left, p, q);
+              } else if (p.val > root.val && q.val > root.val) {
+                return lowestCommonAncestor(root.right, p, q);
+              } else {
+                return root;
+              }
+            };
+          `,
+        },
+      ],
+      explanation: `
+        **Why the \`else\` is the answer:** if the values are not both smaller and not both bigger, then either
+        \`p < root < q\` (they are on different sides), or one of them **equals** the root. In both cases no node lower down
+        contains both, so this is the lowest common ancestor.
+
+        **BST vs. normal binary tree (LC 236, also on this page):** in a normal tree you can't tell which side a node is on, so
+        you search both subtrees, O(n). Here the BST ordering points the way, so you follow **one path**: O(h), which is
+        O(log n) for a balanced tree. If an interviewer gives you a BST and you use the LC 236 solution, mention that you are
+        not using the BST property, then improve it.
+
+        **Space:** your recursion makes at most one call per level, and the call is the last thing it does (a tail call). That
+        makes the loop version a direct rewrite with O(1) space.
+
+        **Edge cases:** p is an ancestor of q (return p); p and q are the same node; the tree has two nodes. The tests cover them.
+      `,
+      fn: 'lowestCommonAncestor',
+      input: ([arr, p, q], H) => {
+        const root = H.tree(arr);
+        return [root, H.find(root, p), H.find(root, q)];
+      },
+      output: (r) => (r ? r.val : null),
+      tests: [
+        { args: [[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], 2, 8], expected: 6, label: 'split at the root' },
+        { args: [[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], 2, 4], expected: 2, label: 'p is an ancestor of q' },
+        { args: [[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], 3, 5], expected: 4, label: 'the walk in the visual' },
+        { args: [[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], 7, 9], expected: 8 },
+        { args: [[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], 0, 5], expected: 2 },
+        { args: [[2, 1], 2, 1], expected: 2, label: 'two nodes' },
+        { args: [[2, 1], 1, 1], expected: 1, label: 'p and q are the same node' },
+      ],
+    },
+    {
       id: 'lca',
       title: 'Lowest Common Ancestor of a Binary Tree',
       difficulty: 'Medium',
