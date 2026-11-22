@@ -1,4 +1,10 @@
 const tree = (a, H) => [H.tree(a[0]), ...a.slice(1)];
+// GeeksforGeeks tree nodes use `.data` instead of `.val`.
+const gfgTree = (a, H) => {
+  const conv = (n) => n && { data: n.val, left: conv(n.left), right: conv(n.right) };
+  return conv(H.tree(a));
+};
+const gfgFind = (n, v) => (!n ? null : n.data === v ? n : gfgFind(n.left, v) || gfgFind(n.right, v));
 
 export default {
   id: 'trees',
@@ -729,6 +735,151 @@ export default {
         { args: [[-2147483648, null, 2147483647]], expected: true, label: 'both extremes' },
         { args: [[3, 1, 5, 0, 2, 4, 6]], expected: true, label: 'a full valid BST' },
         { args: [[1]], expected: true, label: 'one node' },
+      ],
+    },
+    {
+      id: 'inorder-successor-bst',
+      title: 'Inorder Successor in BST',
+      difficulty: 'Easy',
+      lc: 'https://www.geeksforgeeks.org/problems/inorder-successor-in-bst/1',
+      from: 'IL10 – Trees 1 & BST',
+      tags: ['bst', 'inorder', 'search'],
+      statement: 'Given a BST and a reference to a node `k` in it, return the **inorder successor** of `k`: the value that comes right after `k` in an inorder traversal. If there is none, return `-1`. (GfG nodes use `.data`, not `.val`.)\n\n**Examples:** `[2, 1, 3]`, k = 2 → `3` (inorder 1 2 3) · `[20, 8, 22, 4, 12, N, N, N, N, 10, 14]`, k = 8 → `10` (inorder 4 8 10 12 14 20 22)',
+      visual: {"type": "graph", "title": "Walk down from the root, saving every node bigger than k", "height": 330, "nodes": {"20": [280, 40], "8": [160, 120], "22": [400, 120], "4": [95, 205], "12": [225, 205], "10": [170, 290], "14": [280, 290]}, "edges": [["20", "8"], ["20", "22"], ["8", "4"], ["8", "12"], ["12", "10"], ["12", "14"]], "listLabel": "path", "listMarker": false, "waitingLabel": "on the path", "steps": [{"seen": [], "done": [], "list": [], "tree": [], "stat": {"label": "succ", "value": "-1"}, "labels": {"8": "k = 8"}, "code": "let succ = -1;  // root = 20, k.data = 8", "caption": "The inorder successor is the SMALLEST value that is BIGGER than k. Inorder here is 4 8 10 12 14 20 22, so the answer is 10. Your loop finds it by walking ONE path down, without building the inorder list."}, {"seen": ["20"], "done": [], "current": "20", "list": ["20"], "tree": [], "hot": [["20", "8"]], "stat": {"label": "succ", "value": "20"}, "labels": {"8": "k = 8", "20": "succ"}, "code": "k.data (8) < 20  →  succ = 20, root = root.left", "caption": "20 is bigger than 8, so it COULD be the answer: save it. But a smaller value that is still bigger than 8 can only be in 20's LEFT subtree, so go left to look for a better one. 22 (right side) is never checked."}, {"seen": ["20", "8"], "done": ["20"], "current": "8", "list": ["20", "8"], "tree": [["20", "8"]], "hot": [["8", "12"]], "stat": {"label": "succ", "value": "20"}, "labels": {"8": "k = 8", "20": "succ"}, "code": "k.data (8) < 8 is false  →  root = root.right", "caption": "This is k itself. 8 is not bigger than 8, so it cannot be the answer, and nothing on its left can be either (all smaller). Go RIGHT. succ stays 20."}, {"seen": ["20", "8", "12"], "done": ["20", "8"], "current": "12", "list": ["20", "8", "12"], "tree": [["20", "8"], ["8", "12"]], "hot": [["12", "10"]], "stat": {"label": "succ", "value": "12"}, "labels": {"8": "k = 8", "12": "succ"}, "code": "k.data (8) < 12  →  succ = 12, root = root.left", "caption": "12 is bigger than 8: a candidate. We are inside 20's left subtree, so 12 is guaranteed smaller than 20, a closer answer. Replace succ with 12 and go left again."}, {"seen": ["20", "8", "12", "10"], "done": ["20", "8", "12"], "current": "10", "list": ["20", "8", "12", "10"], "tree": [["20", "8"], ["8", "12"], ["12", "10"]], "hot": [], "stat": {"label": "succ", "value": "10"}, "labels": {"8": "k = 8", "10": "succ"}, "code": "k.data (8) < 10  →  succ = 10, root = root.left (null)", "caption": "10 is bigger than 8 and smaller than 12 (we are in 12's left subtree). Replace succ with 10. Its left child is null, so the loop ends."}, {"seen": ["20", "8", "12", "10"], "done": ["20", "8", "12", "10"], "found": "10", "list": ["20", "8", "12", "10"], "tree": [["20", "8"], ["8", "12"], ["12", "10"]], "stat": {"label": "succ", "value": "10"}, "labels": {"8": "k = 8", "10": "answer"}, "code": "return succ;  // 10", "caption": "root is null, so stop and return 10. Only 4 nodes were visited: one path from the root, so O(h) time and O(1) space. 4, 14 and 22 were never touched."}]},
+      approaches: [
+        {
+          name: 'Build the inorder list',
+          time: 'O(n)',
+          space: 'O(n)',
+          idea: 'Inorder of a BST is sorted. Collect it, find k, return the next value. Easy to explain, but it visits every node and stores them all. Say it first, then improve.',
+          code: `
+            class Solution {
+              inOrderSuccessor(root, k) {
+                const vals = [];
+                const inorder = (node) => {
+                  if (!node) return;
+                  inorder(node.left);
+                  vals.push(node.data);
+                  inorder(node.right);
+                };
+                inorder(root);
+                const i = vals.indexOf(k.data);
+                return i >= 0 && i + 1 < vals.length ? vals[i + 1] : -1;
+              }
+            }
+          `,
+        },
+        {
+          name: 'Your accepted solution (walk down, GfG)',
+          time: 'O(h)',
+          space: 'O(1)',
+          idea: `
+            The successor is the **smallest value bigger than k**. Walk down from the root like a search. When the node is
+            bigger than k, it is a candidate: save it and go **left** to look for a smaller one. Otherwise (smaller or equal) the
+            answer can't be here or on its left, so go **right**. The last value you saved is the answer. Step through the
+            visual above.
+          `,
+          code: `
+            class Solution {
+              inOrderSuccessor(root, k) {
+                // code here
+                let succ = -1;
+
+                while (root != null) {
+                  if (k.data < root.data) {
+                    succ = root.data;
+                    root = root.left;
+                  } else {
+                    root = root.right;
+                  }
+                }
+
+                return succ;
+              }
+            }
+          `,
+        },
+        {
+          name: 'Two cases (the textbook answer)',
+          time: 'O(h)',
+          space: 'O(1)',
+          idea: `
+            **Case 1:** k has a right child → the successor is the **leftmost** node of k's right subtree. **Case 2:** no right
+            child → it is the last ancestor where you turned **left** on the way down to k. Your loop does both in one go: it
+            reaches k, turns right, then keeps going left, which is exactly case 1.
+          `,
+          code: `
+            class Solution {
+              inOrderSuccessor(root, k) {
+                // Case 1: smallest value in the right subtree
+                if (k.right) {
+                  let cur = k.right;
+                  while (cur.left) cur = cur.left;
+                  return cur.data;
+                }
+                // Case 2: last ancestor where we went left
+                let succ = -1;
+                let cur = root;
+                while (cur && cur !== k) {
+                  if (k.data < cur.data) {
+                    succ = cur.data;
+                    cur = cur.left;
+                  } else {
+                    cur = cur.right;
+                  }
+                }
+                return succ;
+              }
+            }
+          `,
+        },
+      ],
+      math: {
+        body: `
+The successor of $k$ is $\\text{succ}(k) = \\min\\{\\, x \\in T : x > k \\,\\}$, or $-1$ if no value is bigger than $k$.
+
+**Invariant.** At the start of every loop step, the answer is either the saved \`succ\` or some value inside the subtree at \`root\`.
+
+- **If $k < \\text{root}$:** \`root\` is bigger than $k$, so it qualifies. Everything in its **right** subtree is bigger than \`root\`, so none of those can beat it. The answer is \`root\` itself or something in its **left** subtree. Saving \`succ = root\` and moving left keeps the invariant.
+- **If $k \\ge \\text{root}$:** \`root\` and its whole **left** subtree are $\\le k$, so none of them qualify. The answer is the old \`succ\` or something in the **right** subtree. Moving right keeps the invariant.
+
+When \`root\` becomes \`null\`, the subtree part is empty, so the answer is \`succ\`. If no node was ever bigger than $k$, it is still $-1$.
+
+**Why a new candidate is always better.** Right after saving \`succ = root\`, the loop steps **left**, so every node visited later lies in that node's left subtree and is smaller than it. Each overwrite moves \`succ\` closer to $k$; it never needs a \`Math.min\`.
+
+**Cost.** Each step goes one level down, so at most $h + 1$ nodes are visited: $O(h)$ time and $O(1)$ space. For a balanced tree $h = \\log_2 n$; for a skewed tree (a chain) $h = n$.
+        `,
+      },
+      explanation: `
+        **Strict \`<\` matters:** with \`k.data <= root.data\`, reaching k itself would save k as its own successor. Your \`<\`
+        sends equal values right, which is correct.
+
+        **k only needs its value:** your loop never uses the node reference, just \`k.data\`. So it also works when you are given
+        a plain number, or a value that is not in the tree (it returns the smallest value bigger than it).
+
+        **Predecessor is the mirror:** if \`k.data > root.data\`, save \`root.data\` and go right; otherwise go left. Interviewers
+        often ask for both, or for "floor and ceil in a BST", which is the same walk.
+
+        **Where you'll see it again:** deleting a BST node with two children replaces it with its inorder successor. LeetCode 285
+        is the same problem (Premium) and returns the node instead of the value.
+      `,
+      fn: 'Solution',
+      method: 'inOrderSuccessor',
+      input: ([arr, k], H) => {
+        const root = gfgTree(arr, H);
+        return [root, gfgFind(root, k)];
+      },
+      tests: [
+        { args: [[2, 1, 3], 2], expected: 3, label: 'example 1' },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 8], expected: 10, label: 'example 2 (the walk in the visual)' },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 14], expected: 20, label: 'no right child: successor is an ancestor' },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 12], expected: 14, label: 'has a right child' },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 4], expected: 8 },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 10], expected: 12 },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 20], expected: 22, label: 'k is the root' },
+        { args: [[20, 8, 22, 4, 12, null, null, null, null, 10, 14], 22], expected: -1, label: 'largest value: no successor' },
+        { args: [[5], 5], expected: -1, label: 'one node' },
+        { args: [[1, null, 2, null, 3], 2], expected: 3, label: 'skewed tree (a chain)' },
       ],
     },
     {
